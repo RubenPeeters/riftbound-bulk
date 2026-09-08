@@ -94,6 +94,11 @@ db-reset: db-up
 	@$(PSQLM) -q -c "create database $(POSTGRES_DB)"
 	$(MAKE) db-migrate
 
+## Assert that row-level security denies what it should. Rolls back; leaves no data.
+.PHONY: check-rls
+check-rls:
+	@$(PSQL) -f - < db/checks/rls.sql
+
 ## Open a psql shell as the owner
 .PHONY: db-shell
 db-shell:
