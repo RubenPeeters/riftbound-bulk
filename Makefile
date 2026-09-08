@@ -90,6 +90,11 @@ db-reset: db-up
 doctor:
 	@$(PSQL) -f - < db/checks/doctor.sql
 
+## Run the registration insert as app_user really connects, not via `set role`
+.PHONY: doctor-app
+doctor-app:
+	@./scripts/probe-app.sh
+
 ## Assert that row-level security denies what it should. Rolls back; leaves no data.
 .PHONY: check-rls
 check-rls:

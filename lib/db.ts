@@ -37,6 +37,14 @@ export async function asUser<T>(
   try {
     await client.query("begin");
     await client.query("select set_config('app.discord_id', $1, true)", [discordId ?? ""]);
+    if (process.env.AUTH_DEBUG === "1") {
+      // What Postgres actually sees on THIS connection, which is the only thing that
+      // decides whether the policies pass.
+      const { rows } = await client.query(
+        "select current_user, current_setting('app.discord_id', true) as asserted",
+      );
+      console.log("[db] session:", rows[0]);
+    }
     const result = await fn(client);
     await client.query("commit");
     return result;
