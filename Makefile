@@ -21,7 +21,8 @@ install:
 ## Scaffold the Next.js app (run once, on an empty repo)
 .PHONY: scaffold
 scaffold:
-	@test ! -f package.json || { echo "package.json exists; refusing to scaffold over it"; exit 1; }
+	@test ! -f next.config.mjs || { echo "Next.js app already scaffolded"; exit 1; }
+	@echo ">>> create-next-app merges into the existing package.json; re-run 'make install' after."
 	npx create-next-app@latest . --typescript --tailwind --eslint --app --src-dir=false --import-alias "@/*"
 	$(NODE_PKG) install pg next-auth@beta
 	@echo ">>> Now set output: 'standalone' in next.config.mjs (the Dockerfile needs it)"
@@ -39,6 +40,11 @@ cards:
 .PHONY: load
 load:
 	npx tsx scripts/load-cards.ts --in data/cards
+
+## Report card ids whose printings disagree on rules text. Needs no database.
+.PHONY: collisions
+collisions:
+	npx tsx scripts/load-cards.ts --in data/cards --dry-run
 
 ## Confirm the fetcher is deterministic: two runs must be byte-identical
 .PHONY: determinism

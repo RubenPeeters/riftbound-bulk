@@ -21,7 +21,10 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-    # deliberately no `ports:` — the database is not reachable from the internet
+    ports:
+      # loopback only: reachable by tooling on the box (the card loader, psql), never
+      # from the internet. Binding 0.0.0.0 here would expose Postgres publicly.
+      - "127.0.0.1:5432:5432"
 
   app:
     build: .

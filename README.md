@@ -103,27 +103,54 @@ holds the TLS certificates, and Let's Encrypt rate-limits reissuance.
 ```
 docs/design.md               the plan: difficulties, class diagram, roadmap
 db/migrations/               schema, the single source of truth
+scripts/fetch-cards.ts       Riot's gallery feed -> vendored JSON (deterministic)
+scripts/load-cards.ts        vendored JSON -> Postgres (idempotent upserts)
+data/cards/*.json            1189 cards, committed; a new set is a reviewable diff
+data/manifest.json           provenance: build id, source URL, fetch time, checksums
 docker-compose.yml           Postgres + app + Caddy
 Dockerfile                   Next.js standalone build
 Caddyfile                    TLS and reverse proxy
-scripts/fetch-cards.ts       third-party API -> vendored JSON (must be deterministic)
-scripts/load-cards.ts        vendored JSON -> Postgres
-data/cards/*.json            committed card data; a new set is a reviewable diff
 ```
 
-## Card data sources
+## Card data
+
+`make cards` scrapes the current `buildId` from `playriftbound.com` and pulls Riot's own
+card gallery feed. No key, no authentication. `make determinism` proves the transform is
+byte-stable, which is what makes a new set arrive as a reviewable diff rather than an
+opaque blob.
 
 | Source | Use |
 |---|---|
-| `playriftbound.com/_next/data/{BUILD_ID}/{LOCALE}/card-gallery.json` | **Primary.** Riot's own card gallery feed. No key, no auth. 1189 cards across 5 sets, verified 2026-09-08. `BUILD_ID` is scraped from the page and changes on every Riot deploy. |
+| `playriftbound.com/_next/data/{BUILD_ID}/{LOCALE}/card-gallery.json` | **Primary.** Riot's own feed. 1189 cards over 5 sets. `BUILD_ID` changes on every Riot deploy and is scraped automatically. |
 | [Riot developer portal](https://developer.riotgames.com/docs/riftbound) | Policy: official English card text must be displayed unmodified. |
 | [Cardmarket](https://www.cardmarket.com/) | Price snapshots (P4). Paid, not on the critical path. |
 | [Scrydex](https://scrydex.com/pricing) | Rejected: no free tier, $29/month minimum. |
 
+The feed is an internal implementation detail of Riot's website with no deprecation
+policy, and the domain has already moved once (`riftbound.leagueoflegends.com` now
+redirects to `playriftbound.com`). Vendoring is what makes that survivable: if the feed
+breaks, new sets cannot be ingested and the running site is unaffected.
+
+### Card identity
+
+`card.id` is `slug(name)`, so every printing collapses to one oracle row and "do I own
+Void Gate" does not depend on which set it came from. Two genuinely different cards
+sharing a name would break that, so `make collisions` reports every id whose printings
+disagree on rules text. It needs no database.
+
+Comparing raw text is useless here: alternate-art printings drop parenthetical reminder
+text, which flags 83 of 935 names. Normalising that away leaves **18** real cases, mostly
+basic runes reprinted across sets. Each needs a human decision — same card with errata, or
+two different cards — and genuinely distinct ones get a `card_alias` row. The loader
+reports and never guesses.
+
+## Licensing
+
 Prices come from **Cardmarket**.
 
-Card art is Riot intellectual property. Images are referenced by URL and cached locally
-under `data/images/` (gitignored); nothing is redistributed from this repository.
+Card art is Riot intellectual property, served from `cmsassets.rgpub.io`. Images are
+referenced by URL and cached locally under `data/images/` (gitignored); nothing is
+redistributed from this repository.
 
 Access is approval-gated, which lowers the exposure, but the Riot disclaimer, the
 official-card-text requirement and the source attributions in

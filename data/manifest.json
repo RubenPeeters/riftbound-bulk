@@ -1,0 +1,29 @@
+{
+  "source": "https://playriftbound.com/_next/data/Qynbbd6iujXlLe3VxfyGe/en-us/card-gallery.json",
+  "buildId": "Qynbbd6iujXlLe3VxfyGe",
+  "locale": "en-us",
+  "fetchedAt": "2026-09-08T22:30:47.109Z",
+  "totalCards": 1189,
+  "files": {
+    "OGN.en-us.json": {
+      "count": 352,
+      "sha256": "2c97f0e78916b0445b52829fe482432915b0cb51d2992baa8b105f55cb6acf7c"
+    },
+    "OGS.en-us.json": {
+      "count": 24,
+      "sha256": "0b85bc4b6d0c25024ed7b13bcf19b4d7ae9c527bd34b5dd452e58e07c5cb8ae5"
+    },
+    "SFD.en-us.json": {
+      "count": 288,
+      "sha256": "c38668a8dbc9e5296ab65c34c0e0f059bb267a86023f9f3a5bb327143cf398d9"
+    },
+    "UNL.en-us.json": {
+      "count": 288,
+      "sha256": "82b90c613a10fabcf2abdf338947632ac5eba6ffeba16a7f5cc898b45cf11585"
+    },
+    "VEN.en-us.json": {
+      "count": 237,
+      "sha256": "3695e48a9c55a15ccdd8926fb6cff1d8c8b8dd824b24258c474989b16a488206"
+    }
+  }
+}

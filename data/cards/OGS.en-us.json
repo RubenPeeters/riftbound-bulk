@@ -1,0 +1,666 @@
+[
+  {
+    "id": "ogs-001-024",
+    "publicCode": "OGS-001/024",
+    "set": "OGS",
+    "setName": "Proving Grounds",
+    "collectorNumber": 1,
+    "setTotal": 24,
+    "name": "Annie, Fiery",
+    "slug": "annie-fiery",
+    "type": "unit",
+    "superTypes": [
+      "champion"
+    ],
+    "domains": [
+      "fury"
+    ],
+    "rarity": "epic",
+    "energy": 5,
+    "might": 4,
+    "tags": [
+      "Annie",
+      "Noxus"
+    ],
+    "orientation": "portrait",
+    "illustrator": "Polar Engine Studio",
+    "imageUrl": "https://cmsassets.rgpub.io/sanity/images/dsfx7636/game_data_live/532d75dc36a16eb5954253a77366fcceac7aec62-744x1039.png?accountingTag=RB",
+    "rulesHtml": "<p>Your spells and abilities deal 1 Bonus Damage. (Each instance of damage the spell deals is increased by 1.)</p>",
+    "rulesText": "your spells and abilities deal 1 bonus damage."
+  },
+  {
+    "id": "ogs-002-024",
+    "publicCode": "OGS-002/024",
+    "set": "OGS",
+    "setName": "Proving Grounds",
+    "collectorNumber": 2,
+    "setTotal": 24,
+    "name": "Firestorm",
+    "slug": "firestorm",
+    "type": "spell",
+    "superTypes": [],
+    "domains": [
+      "fury"
+    ],
+    "rarity": "uncommon",
+    "energy": 6,
+    "might": null,
+    "tags": [],
+    "orientation": "portrait",
+    "illustrator": "Kudos Productions",
+    "imageUrl": "https://cmsassets.rgpub.io/sanity/images/dsfx7636/game_data_live/a7a34129e64f0296bf2da166c2b06ed156d568db-744x1039.png?accountingTag=RB",
+    "rulesHtml": "<p>Deal 3 to all enemy units at a battlefield.</p>",
+    "rulesText": "deal 3 to all enemy units at a battlefield."
+  },
+  {
+    "id": "ogs-003-024",
+    "publicCode": "OGS-003/024",
+    "set": "OGS",
+    "setName": "Proving Grounds",
+    "collectorNumber": 3,
+    "setTotal": 24,
+    "name": "Incinerate",
+    "slug": "incinerate",
+    "type": "spell",
+    "superTypes": [],
+    "domains": [
+      "fury"
+    ],
+    "rarity": "common",
+    "energy": 2,
+    "might": null,
+    "tags": [],
+    "orientation": "portrait",
+    "illustrator": "Kudos Productions",
+    "imageUrl": "https://cmsassets.rgpub.io/sanity/images/dsfx7636/game_data_live/46e4eaada1412f9b6c24751bdb3932c6a51e905f-744x1039.png?accountingTag=RB",
+    "rulesHtml": "<p>[Action] (Play on your turn or in showdowns.)<br />Deal 2 to a unit at a battlefield.</p>",
+    "rulesText": "[action] deal 2 to a unit at a battlefield."
+  },
+  {
+    "id": "ogs-004-024",
+    "publicCode": "OGS-004/024",
+    "set": "OGS",
+    "setName": "Proving Grounds",
+    "collectorNumber": 4,
+    "setTotal": 24,
+    "name": "Yi, Meditative",
+    "slug": "yi-meditative",
+    "type": "unit",
+    "superTypes": [
+      "champion"
+    ],
+    "domains": [
+      "calm"
+    ],
+    "rarity": "rare",
+    "energy": 5,
+    "might": 4,
+    "tags": [
+      "Ionia",
+      "Master Yi"
+    ],
+    "orientation": "portrait",
+    "illustrator": "Kudos Productions",
+    "imageUrl": "https://cmsassets.rgpub.io/sanity/images/dsfx7636/game_data_live/5508566c8f05f09492148faa803332a731095eb7-744x1039.png?accountingTag=RB",
+    "rulesHtml": "<p>While you have 8+ runes, I have +4 :rb_might:.</p>",
+    "rulesText": "while you have 8+ runes, i have +4 :rb_might:."
+  },
+  {
+    "id": "ogs-005-024",
+    "publicCode": "OGS-005/024",
+    "set": "OGS",
+    "setName": "Proving Grounds",
+    "collectorNumber": 5,
+    "setTotal": 24,
+    "name": "Zephyr Sage",
+    "slug": "zephyr-sage",
+    "type": "unit",
+    "superTypes": [],
+    "domains": [
+      "calm"
+    ],
+    "rarity": "uncommon",
+    "energy": 6,
+    "might": 6,
+    "tags": [
+      "Bird",
+      "Ionia"
+    ],
+    "orientation": "portrait",
+    "illustrator": "Six More Vodka",
+    "imageUrl": "https://cmsassets.rgpub.io/sanity/images/dsfx7636/game_data_live/7664b03bb107954195153d9f2f86c5d63682fa4b-744x1039.png?accountingTag=RB",
+    "rulesHtml": "<p>[Shield] (+1 :rb_might: while I'm a defender.)</p>",
+    "rulesText": "[shield]"
+  },
+  {
+    "id": "ogs-006-024",
+    "publicCode": "OGS-006/024",
+    "set": "OGS",
+    "setName": "Proving Grounds",
+    "collectorNumber": 6,
+    "setTotal": 24,
+    "name": "Lux, Illuminated",
+    "slug": "lux-illuminated",
+    "type": "unit",
+    "superTypes": [
+      "champion"
+    ],
+    "domains": [
+      "mind"
+    ],
+    "rarity": "rare",
+    "energy": 6,
+    "might": 5,
+    "tags": [
+      "Demacia",
+      "Lux"
+    ],
+    "orientation": "portrait",
+    "illustrator": "Six More Vodka",
+    "imageUrl": "https://cmsassets.rgpub.io/sanity/images/dsfx7636/game_data_live/a0d10edf30abb6fde21f5d386e9a7db3c1b0a098-744x1039.png?accountingTag=RB",
+    "rulesHtml": "<p>When you play a spell that costs :rb_energy_5: or more, give me +3 :rb_might: this turn.</p>",
+    "rulesText": "when you play a spell that costs :rb_energy_5: or more, give me +3 :rb_might: this turn."
+  },
+  {
+    "id": "ogs-007-024",
+    "publicCode": "OGS-007/024",
+    "set": "OGS",
+    "setName": "Proving Grounds",
+    "collectorNumber": 7,
+    "setTotal": 24,
+    "name": "Garen, Rugged",
+    "slug": "garen-rugged",
+    "type": "unit",
+    "superTypes": [
+      "champion"
+    ],
+    "domains": [
+      "body"
+    ],
+    "rarity": "rare",
+    "energy": 6,
+    "might": 5,
+    "tags": [
+      "Demacia",
+      "Elite",
+      "Garen"
+    ],
+    "orientation": "portrait",
+    "illustrator": "Six More Vodka",
+    "imageUrl": "https://cmsassets.rgpub.io/sanity/images/dsfx7636/game_data_live/67c22dc29a7a28dabe0f169a7848c25bef1fbda4-744x1039.png?accountingTag=RB",
+    "rulesHtml": "<p>[Assault 2], [Shield 2] (+2 :rb_might: while I'm an attacker or defender.)</p>",
+    "rulesText": "[assault 2], [shield 2]"
+  },
+  {
+    "id": "ogs-008-024",
+    "publicCode": "OGS-008/024",
+    "set": "OGS",
+    "setName": "Proving Grounds",
+    "collectorNumber": 8,
+    "setTotal": 24,
+    "name": "Gentlemen's Duel",
+    "slug": "gentlemen-s-duel",
+    "type": "spell",
+    "superTypes": [],
+    "domains": [
+      "body"
+    ],
+    "rarity": "common",
+    "energy": 6,
+    "might": null,
+    "tags": [],
+    "orientation": "portrait",
+    "illustrator": "Kudos Productions",
+    "imageUrl": "https://cmsassets.rgpub.io/sanity/images/dsfx7636/game_data_live/4568ab827fdcd42d6bb86b1c2de6182e286c9ee9-744x1039.png?accountingTag=RB",
+    "rulesHtml": "<p>[Action] (Play on your turn or in showdowns.)<br />Give a friendly unit +3 :rb_might: this turn. Then choose an enemy unit. They deal damage equal to their Mights to each other.</p>",
+    "rulesText": "[action] give a friendly unit +3 :rb_might: this turn. then choose an enemy unit. they deal damage equal to their mights to each other."
+  },
+  {
+    "id": "ogs-009-024",
+    "publicCode": "OGS-009/024",
+    "set": "OGS",
+    "setName": "Proving Grounds",
+    "collectorNumber": 9,
+    "setTotal": 24,
+    "name": "Yi, Honed",
+    "slug": "yi-honed",
+    "type": "unit",
+    "superTypes": [
+      "champion"
+    ],
+    "domains": [
+      "body"
+    ],
+    "rarity": "epic",
+    "energy": 7,
+    "might": 6,
+    "tags": [
+      "Ionia",
+      "Master Yi"
+    ],
+    "orientation": "portrait",
+    "illustrator": "Kudos Productions",
+    "imageUrl": "https://cmsassets.rgpub.io/sanity/images/dsfx7636/game_data_live/0e16976cd6d7ee5a874be9351b428671990fbd25-744x1039.png?accountingTag=RB",
+    "rulesHtml": "<p>[Ganking] (I can move from battlefield to battlefield.)<br />I enter ready.</p>",
+    "rulesText": "[ganking] i enter ready."
+  },
+  {
+    "id": "ogs-010-024",
+    "publicCode": "OGS-010/024",
+    "set": "OGS",
+    "setName": "Proving Grounds",
+    "collectorNumber": 10,
+    "setTotal": 24,
+    "name": "Annie, Stubborn",
+    "slug": "annie-stubborn",
+    "type": "unit",
+    "superTypes": [
+      "champion"
+    ],
+    "domains": [
+      "chaos"
+    ],
+    "rarity": "rare",
+    "energy": 4,
+    "might": 3,
+    "tags": [
+      "Annie",
+      "Noxus"
+    ],
+    "orientation": "portrait",
+    "illustrator": "League Splash Team",
+    "imageUrl": "https://cmsassets.rgpub.io/sanity/images/dsfx7636/game_data_live/44eb968cf0c54e75970588b69eef5c5f5ccc9b24-744x1039.png?accountingTag=RB",
+    "rulesHtml": "<p>When you play me, return a spell from your trash to your hand.</p>",
+    "rulesText": "when you play me, return a spell from your trash to your hand."
+  },
+  {
+    "id": "ogs-011-024",
+    "publicCode": "OGS-011/024",
+    "set": "OGS",
+    "setName": "Proving Grounds",
+    "collectorNumber": 11,
+    "setTotal": 24,
+    "name": "Flash",
+    "slug": "flash",
+    "type": "spell",
+    "superTypes": [],
+    "domains": [
+      "chaos"
+    ],
+    "rarity": "common",
+    "energy": 2,
+    "might": null,
+    "tags": [],
+    "orientation": "portrait",
+    "illustrator": "Sugar Free",
+    "imageUrl": "https://cmsassets.rgpub.io/sanity/images/dsfx7636/game_data_live/4d9cc1c13b75933e509e642213f13359350cd3f9-744x1039.png?accountingTag=RB",
+    "rulesHtml": "<p>[Reaction] (Play any time, even before spells and abilities resolve.)<br />Move up to 2 friendly units to base.</p>",
+    "rulesText": "[reaction] move up to 2 friendly units to base."
+  },
+  {
+    "id": "ogs-012-024",
+    "publicCode": "OGS-012/024",
+    "set": "OGS",
+    "setName": "Proving Grounds",
+    "collectorNumber": 12,
+    "setTotal": 24,
+    "name": "Blast of Power",
+    "slug": "blast-of-power",
+    "type": "spell",
+    "superTypes": [],
+    "domains": [
+      "order"
+    ],
+    "rarity": "common",
+    "energy": 6,
+    "might": null,
+    "tags": [],
+    "orientation": "portrait",
+    "illustrator": "Kudos Productions",
+    "imageUrl": "https://cmsassets.rgpub.io/sanity/images/dsfx7636/game_data_live/026f851a703601fce4142c0791e913377c170b47-744x1039.png?accountingTag=RB",
+    "rulesHtml": "<p>[Action] (Play on your turn or in showdowns.)<br />Kill a unit at a battlefield.</p>",
+    "rulesText": "[action] kill a unit at a battlefield."
+  },
+  {
+    "id": "ogs-013-024",
+    "publicCode": "OGS-013/024",
+    "set": "OGS",
+    "setName": "Proving Grounds",
+    "collectorNumber": 13,
+    "setTotal": 24,
+    "name": "Garen, Commander",
+    "slug": "garen-commander",
+    "type": "unit",
+    "superTypes": [
+      "champion"
+    ],
+    "domains": [
+      "order"
+    ],
+    "rarity": "epic",
+    "energy": 6,
+    "might": 5,
+    "tags": [
+      "Demacia",
+      "Elite",
+      "Garen"
+    ],
+    "orientation": "portrait",
+    "illustrator": "Six More Vodka",
+    "imageUrl": "https://cmsassets.rgpub.io/sanity/images/dsfx7636/game_data_live/cbf2c12d69a86566e4cda07050b2d4495e40187e-744x1039.png?accountingTag=RB",
+    "rulesHtml": "<p>Other friendly units have +1 :rb_might: here.</p>",
+    "rulesText": "other friendly units have +1 :rb_might: here."
+  },
+  {
+    "id": "ogs-014-024",
+    "publicCode": "OGS-014/024",
+    "set": "OGS",
+    "setName": "Proving Grounds",
+    "collectorNumber": 14,
+    "setTotal": 24,
+    "name": "Lux, Crownguard",
+    "slug": "lux-crownguard",
+    "type": "unit",
+    "superTypes": [
+      "champion"
+    ],
+    "domains": [
+      "order"
+    ],
+    "rarity": "epic",
+    "energy": 4,
+    "might": 2,
+    "tags": [
+      "Demacia",
+      "Lux"
+    ],
+    "orientation": "portrait",
+    "illustrator": "Envar Studio",
+    "imageUrl": "https://cmsassets.rgpub.io/sanity/images/dsfx7636/game_data_live/17d0793ad495727e67bb1c94ae0e11cd4705870f-744x1039.png?accountingTag=RB",
+    "rulesHtml": "<p>:rb_exhaust:: [Reaction] — [Add] :rb_energy_2:. Use only to play spells. (Abilities that add resources can't be reacted to.)</p>",
+    "rulesText": ":rb_exhaust:: [reaction] — [add] :rb_energy_2:. use only to play spells."
+  },
+  {
+    "id": "ogs-015-024",
+    "publicCode": "OGS-015/024",
+    "set": "OGS",
+    "setName": "Proving Grounds",
+    "collectorNumber": 15,
+    "setTotal": 24,
+    "name": "Recruit the Vanguard",
+    "slug": "recruit-the-vanguard",
+    "type": "spell",
+    "superTypes": [],
+    "domains": [
+      "order"
+    ],
+    "rarity": "uncommon",
+    "energy": 6,
+    "might": null,
+    "tags": [],
+    "orientation": "portrait",
+    "illustrator": "Kudos Productions",
+    "imageUrl": "https://cmsassets.rgpub.io/sanity/images/dsfx7636/game_data_live/81d1c47459606f7b627778cce9b5f0e44d80f7fa-744x1039.png?accountingTag=RB",
+    "rulesHtml": "<p>[Action] (Play on your turn or in showdowns.)<br />Play four 1 :rb_might: Recruit unit tokens. (They can be played to your base or to battlefields you control.)</p>",
+    "rulesText": "[action] play four 1 :rb_might: recruit unit tokens."
+  },
+  {
+    "id": "ogs-016-024",
+    "publicCode": "OGS-016/024",
+    "set": "OGS",
+    "setName": "Proving Grounds",
+    "collectorNumber": 16,
+    "setTotal": 24,
+    "name": "Vanguard Attendant",
+    "slug": "vanguard-attendant",
+    "type": "unit",
+    "superTypes": [],
+    "domains": [
+      "order"
+    ],
+    "rarity": "common",
+    "energy": 6,
+    "might": 5,
+    "tags": [
+      "Demacia",
+      "Elite"
+    ],
+    "orientation": "portrait",
+    "illustrator": "Six More Vodka",
+    "imageUrl": "https://cmsassets.rgpub.io/sanity/images/dsfx7636/game_data_live/4ce467c1d51a65ab4fbae918dca38ae90b510844-744x1039.png?accountingTag=RB",
+    "rulesHtml": "<p>I enter ready.</p>",
+    "rulesText": "i enter ready."
+  },
+  {
+    "id": "ogs-017-024",
+    "publicCode": "OGS-017/024",
+    "set": "OGS",
+    "setName": "Proving Grounds",
+    "collectorNumber": 17,
+    "setTotal": 24,
+    "name": "Dark Child - Starter",
+    "slug": "dark-child-starter",
+    "type": "legend",
+    "superTypes": [
+      "champion"
+    ],
+    "domains": [
+      "chaos",
+      "fury"
+    ],
+    "rarity": "rare",
+    "energy": null,
+    "might": null,
+    "tags": [
+      "Annie"
+    ],
+    "orientation": "portrait",
+    "illustrator": "Six More Vodka",
+    "imageUrl": "https://cmsassets.rgpub.io/sanity/images/dsfx7636/game_data_live/89963e1d1cffd69c620fb5d6b037f50d5c334463-744x1039.png?accountingTag=RB",
+    "rulesHtml": "<p>At the end of your turn, ready 2 runes.</p>",
+    "rulesText": "at the end of your turn, ready 2 runes."
+  },
+  {
+    "id": "ogs-018-024",
+    "publicCode": "OGS-018/024",
+    "set": "OGS",
+    "setName": "Proving Grounds",
+    "collectorNumber": 18,
+    "setTotal": 24,
+    "name": "Tibbers",
+    "slug": "tibbers",
+    "type": "unit",
+    "superTypes": [
+      "signature"
+    ],
+    "domains": [
+      "chaos",
+      "fury"
+    ],
+    "rarity": "epic",
+    "energy": 8,
+    "might": 7,
+    "tags": [
+      "Annie"
+    ],
+    "orientation": "portrait",
+    "illustrator": "Polar Engine Studio",
+    "imageUrl": "https://cmsassets.rgpub.io/sanity/images/dsfx7636/game_data_live/74f8bc78573b33d9979b0e9c121b858d770a490c-744x1039.png?accountingTag=RB",
+    "rulesHtml": "<p>When you play me, deal 3 to all units at battlefields.</p>",
+    "rulesText": "when you play me, deal 3 to all units at battlefields."
+  },
+  {
+    "id": "ogs-019-024",
+    "publicCode": "OGS-019/024",
+    "set": "OGS",
+    "setName": "Proving Grounds",
+    "collectorNumber": 19,
+    "setTotal": 24,
+    "name": "Wuju Bladesman - Starter",
+    "slug": "wuju-bladesman-starter",
+    "type": "legend",
+    "superTypes": [
+      "champion"
+    ],
+    "domains": [
+      "body",
+      "calm"
+    ],
+    "rarity": "rare",
+    "energy": null,
+    "might": null,
+    "tags": [
+      "Master Yi"
+    ],
+    "orientation": "portrait",
+    "illustrator": "Grafit Studio/Quy Ho",
+    "imageUrl": "https://cmsassets.rgpub.io/sanity/images/dsfx7636/game_data_live/8231ced23eaf22ca3bf62ec8cb86b83a3e222da6-744x1039.png?accountingTag=RB",
+    "rulesHtml": "<p>While a friendly unit defends alone, it gets +2 :rb_might:.</p>",
+    "rulesText": "while a friendly unit defends alone, it gets +2 :rb_might:."
+  },
+  {
+    "id": "ogs-020-024",
+    "publicCode": "OGS-020/024",
+    "set": "OGS",
+    "setName": "Proving Grounds",
+    "collectorNumber": 20,
+    "setTotal": 24,
+    "name": "Highlander",
+    "slug": "highlander",
+    "type": "spell",
+    "superTypes": [
+      "signature"
+    ],
+    "domains": [
+      "body",
+      "calm"
+    ],
+    "rarity": "epic",
+    "energy": 4,
+    "might": null,
+    "tags": [
+      "Master Yi"
+    ],
+    "orientation": "portrait",
+    "illustrator": "Kudos Productions",
+    "imageUrl": "https://cmsassets.rgpub.io/sanity/images/dsfx7636/game_data_live/18c0818cbbfdf26a1237b4f7703b1f035f47b014-744x1039.png?accountingTag=RB",
+    "rulesHtml": "<p>[Reaction] (Play any time, even before spells and abilities resolve.)<br />Choose a friendly unit. The next time it dies this turn, recall it exhausted instead. (Send it to base. This isn't a move.)</p>",
+    "rulesText": "[reaction] choose a friendly unit. the next time it dies this turn, recall it exhausted instead."
+  },
+  {
+    "id": "ogs-021-024",
+    "publicCode": "OGS-021/024",
+    "set": "OGS",
+    "setName": "Proving Grounds",
+    "collectorNumber": 21,
+    "setTotal": 24,
+    "name": "Lady of Luminosity - Starter",
+    "slug": "lady-of-luminosity-starter",
+    "type": "legend",
+    "superTypes": [
+      "champion"
+    ],
+    "domains": [
+      "mind",
+      "order"
+    ],
+    "rarity": "rare",
+    "energy": null,
+    "might": null,
+    "tags": [
+      "Lux"
+    ],
+    "orientation": "portrait",
+    "illustrator": "Grafit Studio/Maki Planas Mata",
+    "imageUrl": "https://cmsassets.rgpub.io/sanity/images/dsfx7636/game_data_live/44885d811b70621b188d9813b2b10b5cff1b81e6-744x1039.png?accountingTag=RB",
+    "rulesHtml": "<p>When you play a spell that costs :rb_energy_5: or more, draw 1.</p>",
+    "rulesText": "when you play a spell that costs :rb_energy_5: or more, draw 1."
+  },
+  {
+    "id": "ogs-022-024",
+    "publicCode": "OGS-022/024",
+    "set": "OGS",
+    "setName": "Proving Grounds",
+    "collectorNumber": 22,
+    "setTotal": 24,
+    "name": "Final Spark",
+    "slug": "final-spark",
+    "type": "spell",
+    "superTypes": [
+      "signature"
+    ],
+    "domains": [
+      "mind",
+      "order"
+    ],
+    "rarity": "epic",
+    "energy": 8,
+    "might": null,
+    "tags": [
+      "Lux"
+    ],
+    "orientation": "portrait",
+    "illustrator": "Kudos Productions",
+    "imageUrl": "https://cmsassets.rgpub.io/sanity/images/dsfx7636/game_data_live/4558a2dc1bb1f1b8a73ec0d82244654e84b12687-744x1039.png?accountingTag=RB",
+    "rulesHtml": "<p>[Action] (Play on your turn or in showdowns.)<br />Deal 8 to a unit.</p>",
+    "rulesText": "[action] deal 8 to a unit."
+  },
+  {
+    "id": "ogs-023-024",
+    "publicCode": "OGS-023/024",
+    "set": "OGS",
+    "setName": "Proving Grounds",
+    "collectorNumber": 23,
+    "setTotal": 24,
+    "name": "Might of Demacia - Starter",
+    "slug": "might-of-demacia-starter",
+    "type": "legend",
+    "superTypes": [
+      "champion"
+    ],
+    "domains": [
+      "body",
+      "order"
+    ],
+    "rarity": "rare",
+    "energy": null,
+    "might": null,
+    "tags": [
+      "Garen"
+    ],
+    "orientation": "portrait",
+    "illustrator": "Six More Vodka",
+    "imageUrl": "https://cmsassets.rgpub.io/sanity/images/dsfx7636/game_data_live/e7185deb46f17770802d06aeddfe3b929afff880-744x1039.png?accountingTag=RB",
+    "rulesHtml": "<p>When you conquer, if you have 4+ units at that battlefield, draw 2.</p>",
+    "rulesText": "when you conquer, if you have 4+ units at that battlefield, draw 2."
+  },
+  {
+    "id": "ogs-024-024",
+    "publicCode": "OGS-024/024",
+    "set": "OGS",
+    "setName": "Proving Grounds",
+    "collectorNumber": 24,
+    "setTotal": 24,
+    "name": "Decisive Strike",
+    "slug": "decisive-strike",
+    "type": "spell",
+    "superTypes": [
+      "signature"
+    ],
+    "domains": [
+      "body",
+      "order"
+    ],
+    "rarity": "epic",
+    "energy": 5,
+    "might": null,
+    "tags": [
+      "Garen"
+    ],
+    "orientation": "portrait",
+    "illustrator": "Kudos Productions",
+    "imageUrl": "https://cmsassets.rgpub.io/sanity/images/dsfx7636/game_data_live/986782271be078c184a8d1c196e375106459c6c5-744x1039.png?accountingTag=RB",
+    "rulesHtml": "<p>[Action] (Play on your turn or in showdowns.)<br />Give friendly units +2 :rb_might: this turn.</p>",
+    "rulesText": "[action] give friendly units +2 :rb_might: this turn."
+  }
+]

@@ -1,0 +1,14 @@
+{
+  "name": "riftbound-db",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "cards": "tsx scripts/fetch-cards.ts",
+    "load": "tsx scripts/load-cards.ts"
+  },
+  "devDependencies": {
+    "pg": "^8.13.1",
+    "tsx": "^4.19.2",
+    "@types/pg": "^8.11.10"
+  }
+}
