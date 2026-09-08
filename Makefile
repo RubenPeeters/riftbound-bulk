@@ -85,6 +85,11 @@ db-reset: db-up
 	@$(PSQLM) -q -c "create database $(POSTGRES_DB)"
 	$(MAKE) db-migrate
 
+## Print what state the database is actually in: migrations, roles, policies, counts
+.PHONY: doctor
+doctor:
+	@$(PSQL) -f - < db/checks/doctor.sql
+
 ## Assert that row-level security denies what it should. Rolls back; leaves no data.
 .PHONY: check-rls
 check-rls:
