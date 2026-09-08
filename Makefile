@@ -68,7 +68,9 @@ determinism:
 
 # Migrations and the loader connect as the OWNER, which bypasses RLS by design.
 # The application connects as app_user via DATABASE_URL, which does not.
-PSQL = docker compose exec -T db psql -v ON_ERROR_STOP=1 -U $(POSTGRES_USER) -d $(POSTGRES_DB)
+PSQL  = docker compose exec -T db psql -v ON_ERROR_STOP=1 -U $(POSTGRES_USER) -d $(POSTGRES_DB)
+# Connects to the maintenance database, so it can drop and recreate ours.
+PSQLM = docker compose exec -T db psql -v ON_ERROR_STOP=1 -U $(POSTGRES_USER) -d postgres
 POSTGRES_USER ?= riftbound
 POSTGRES_DB   ?= riftbound
 
@@ -83,10 +85,13 @@ db-migrate: db-up
 	@./scripts/migrate.sh
 
 ## Drop and rebuild the database from scratch. Destroys all card and ledger data.
+# Drops the database rather than the Docker volume: no volume name to guess, and no way
+# to take Caddy's certificates with it by accident. `with (force)` disconnects the app.
 .PHONY: db-reset
-db-reset:
-	docker compose rm -sf db
-	docker volume rm -f riftbound-db_pgdata
+db-reset: db-up
+	@echo "dropping database $(POSTGRES_DB)"
+	@$(PSQLM) -q -c "drop database if exists $(POSTGRES_DB) with (force)"
+	@$(PSQLM) -q -c "create database $(POSTGRES_DB)"
 	$(MAKE) db-migrate
 
 ## Open a psql shell as the owner
