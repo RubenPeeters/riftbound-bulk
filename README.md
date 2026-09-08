@@ -5,8 +5,8 @@ own and, above all, **who lent what to whom**.
 
 ## Status
 
-Backend working: schema, card loader and 1189 cards in Postgres. Discord sign-in and the
-approval gate are in. The card browser and collection entry are not built yet. Read
+Working: schema, card loader, 1189 cards, Discord sign-in, the admin approval queue and
+the card browser. Collection entry and the loan ledger UI are not built yet. Read
 [docs/design.md](docs/design.md) first: it covers what makes loan tracking hard, the
 class diagram, and the open questions. The schema in
 [db/migrations/0001_init.sql](db/migrations/0001_init.sql) is the single
@@ -124,7 +124,10 @@ holds the TLS certificates, and Let's Encrypt rate-limits reissuance.
 ## Layout
 
 ```
-app/                         Next.js App Router pages
+app/page.tsx                 sign in, and where you are in the approval flow
+app/admin/                   approval queue: approve, reject, suspend
+app/cards/                   card browser, filtered and paged
+lib/queries.ts               every read the pages do
 lib/db.ts                    asPerson(): the transaction wrapper RLS depends on
 docs/design.md               the plan: difficulties, class diagram, roadmap
 db/migrations/               schema, the single source of truth

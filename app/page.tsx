@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { auth, signIn, signOut } from "@/auth";
 import { viewer } from "@/lib/db";
 
@@ -64,8 +65,24 @@ export default async function Home() {
               {me.role === "admin" ? " (admin)" : ""}
             </h2>
             <p className="mt-2 mb-4 text-sm text-neutral-400">
-              Approved. The card browser and collection entry are not built yet.
+              Approved. Collection entry and the loan ledger are not built yet.
             </p>
+            <div className="mb-4 flex gap-3">
+              <Link
+                href="/cards"
+                className="rounded bg-neutral-100 px-3 py-1.5 text-sm font-medium text-neutral-900"
+              >
+                Browse cards
+              </Link>
+              {me.role === "admin" && (
+                <Link
+                  href="/admin"
+                  className="rounded border border-neutral-700 px-3 py-1.5 text-sm text-neutral-300 hover:bg-neutral-800"
+                >
+                  Members
+                </Link>
+              )}
+            </div>
             <SignOut />
           </>
         ) : (
