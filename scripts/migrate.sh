@@ -40,3 +40,18 @@ if [ "$pending" -eq 0 ]; then
 else
     echo "applied $pending migration(s)"
 fi
+
+# 0001 creates app_user with no password, because a password does not belong in a
+# committed migration. Set it here from .env so the role and DATABASE_URL cannot drift
+# apart: both derive from APP_USER_PASSWORD, which is the only place it is written.
+#
+# The literal is escaped by doubling single quotes and passed on stdin rather than as an
+# argument, so it does not appear in the process list.
+if [ -n "${APP_USER_PASSWORD:-}" ]; then
+    esc=${APP_USER_PASSWORD//\'/\'\'}
+    printf "alter role app_user with password '%s';\n" "$esc" | "${PSQL[@]}" -q -f -
+    echo "app_user password set from APP_USER_PASSWORD"
+else
+    echo "WARNING: APP_USER_PASSWORD is empty, so app_user has no password and the app"
+    echo "         cannot connect. Set it in .env and re-run: make db-migrate"
+fi

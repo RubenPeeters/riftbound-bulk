@@ -34,7 +34,7 @@ services:
         condition: service_healthy
     environment:
       # the app connects as app_user, which is subject to RLS
-      DATABASE_URL: ${DATABASE_URL}
+      DATABASE_URL: postgres://app_user:${APP_USER_PASSWORD}@db:5432/${POSTGRES_DB:-riftbound}
       AUTH_SECRET: ${AUTH_SECRET}
       AUTH_DISCORD_ID: ${AUTH_DISCORD_ID}
       AUTH_DISCORD_SECRET: ${AUTH_DISCORD_SECRET}

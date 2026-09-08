@@ -33,10 +33,15 @@ until an admin approves it. See [docs/design.md §3](docs/design.md).
 Two database roles: the app connects as `app_user` and is subject to RLS; migrations and
 the card loader connect as the owner and bypass it. `app_user` must never own the tables.
 
+`app_user`'s password is set by `make db-migrate` from `APP_USER_PASSWORD`, and
+`DATABASE_URL` is built from the same variable, so the role and the connection string
+cannot drift apart. Generate a URL-safe value with `openssl rand -hex 32`: a password
+containing `@`, `:` or `/` would break the connection URL.
+
 ## Getting started
 
 ```bash
-cp .env.example .env          # fill in POSTGRES_PASSWORD, AUTH_SECRET, Discord creds
+cp .env.example .env          # POSTGRES_PASSWORD, APP_USER_PASSWORD, AUTH_SECRET, Discord
 make db-migrate               # starts Postgres and applies db/migrations/ IN ORDER
 make load                     # load the committed card data into Postgres
 make dev
