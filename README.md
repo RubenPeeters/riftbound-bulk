@@ -5,7 +5,9 @@ own and, above all, **who lent what to whom**.
 
 ## Status
 
-Design complete, application not yet scaffolded. Read
+Backend working: schema, card loader and 1189 cards in Postgres. The web application is
+a skeleton that proves the database wiring; sign-in and collection entry are not built.
+Read
 [docs/design.md](docs/design.md) first: it covers what makes loan tracking hard, the
 class diagram, and the open questions. The schema in
 [db/migrations/0001_init.sql](db/migrations/0001_init.sql) is the single
@@ -37,7 +39,6 @@ the card loader connect as the owner and bypass it. `app_user` must never own th
 cp .env.example .env          # fill in POSTGRES_PASSWORD, AUTH_SECRET, Discord creds
 make db-migrate               # starts Postgres and applies db/migrations/ IN ORDER
 make load                     # load the committed card data into Postgres
-make scaffold                 # once, creates the Next.js app
 make dev
 ```
 
@@ -119,6 +120,8 @@ holds the TLS certificates, and Let's Encrypt rate-limits reissuance.
 ## Layout
 
 ```
+app/                         Next.js App Router pages
+lib/db.ts                    asPerson(): the transaction wrapper RLS depends on
 docs/design.md               the plan: difficulties, class diagram, roadmap
 db/migrations/               schema, the single source of truth
 scripts/fetch-cards.ts       Riot's gallery feed -> vendored JSON (deterministic)

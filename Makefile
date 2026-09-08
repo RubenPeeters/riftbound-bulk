@@ -27,15 +27,6 @@ node_modules: package.json
 	$(NODE) npm install
 	@touch node_modules
 
-## Scaffold the Next.js app (run once, on an empty repo)
-.PHONY: scaffold
-scaffold:
-	@test ! -f next.config.mjs || { echo "Next.js app already scaffolded"; exit 1; }
-	@echo ">>> create-next-app merges into the existing package.json; re-run 'make install' after."
-	npx create-next-app@latest . --typescript --tailwind --eslint --app --src-dir=false --import-alias "@/*"
-	npm install pg next-auth@beta
-	@echo ">>> Now set output: 'standalone' in next.config.mjs (the Dockerfile needs it)"
-
 #################################################################################
 # CARD DATA                                                                     #
 #################################################################################
@@ -123,9 +114,9 @@ backup:
 # DEVELOPMENT                                                                   #
 #################################################################################
 
-## Run the dev server
+## Run the dev server (needs Node on the host; use `make up` on the server)
 .PHONY: dev
-dev:
+dev: node_modules
 	npm run dev
 
 ## Production build

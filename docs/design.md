@@ -470,6 +470,13 @@ set local app.person_id = '<uuid>';
 commit;
 ```
 
+In code this is `asPerson()` in [`lib/db.ts`](../lib/db.ts), and it is the only place
+that opens a connection to a domain table. Note that it calls
+`set_config('app.person_id', $1, true)` rather than interpolating a `SET LOCAL`
+statement: `set local app.person_id = $1` cannot take a bound parameter, and building
+that string by hand would put an injection point on the value that decides what the
+caller may see.
+
 `set local` is discarded at commit or rollback. That is the whole reason it is safe
 behind a connection pool: a pooled connection cannot carry one user's identity into the
 next user's request. A plain `set` would, and that is the bug to watch for. Every query
