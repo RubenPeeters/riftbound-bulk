@@ -1,0 +1,21 @@
+# Node / Next.js
+node_modules/
+.next/
+out/
+next-env.d.ts
+*.tsbuildinfo
+
+# Env & secrets — credentials live in .env.local, never in a committed file
+.env
+.env.local
+.env*.local
+
+# Database dumps
+backups/
+
+# Card images cached for local dev; never redistributed from this repo
+data/images/
+
+# OS / editor
+.DS_Store
+*.log

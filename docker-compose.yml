@@ -1,0 +1,60 @@
+# Single-host deployment for a Hetzner box. Postgres, the Next.js app and Caddy for TLS.
+#
+# Caddy obtains and renews certificates automatically; point an A record at the box and
+# set DOMAIN in .env. Postgres is not published to the host: only the app reaches it.
+
+name: riftbound-db
+
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-riftbound}
+      POSTGRES_USER: ${POSTGRES_USER:-riftbound}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-riftbound}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    # deliberately no `ports:` — the database is not reachable from the internet
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      # the app connects as app_user, which is subject to RLS
+      DATABASE_URL: ${DATABASE_URL}
+      AUTH_SECRET: ${AUTH_SECRET}
+      AUTH_DISCORD_ID: ${AUTH_DISCORD_ID}
+      AUTH_DISCORD_SECRET: ${AUTH_DISCORD_SECRET}
+      AUTH_URL: https://${DOMAIN}
+      NODE_ENV: production
+    expose:
+      - "3000"
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on:
+      - app
+    environment:
+      DOMAIN: ${DOMAIN:?set DOMAIN in .env}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  pgdata:
+  caddy_data:
+  caddy_config:
