@@ -19,7 +19,3 @@ data/images/
 # OS / editor
 .DS_Store
 *.log
-
-# Next.js build types
-.next/
-next-env.d.ts
