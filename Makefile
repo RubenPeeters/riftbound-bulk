@@ -95,6 +95,11 @@ doctor:
 doctor-app:
 	@./scripts/probe-app.sh
 
+## Bisect which part of the registration insert the policy rejects
+.PHONY: doctor-bisect
+doctor-bisect:
+	@./scripts/probe-bisect.sh
+
 ## Assert that row-level security denies what it should. Rolls back; leaves no data.
 .PHONY: check-rls
 check-rls:
