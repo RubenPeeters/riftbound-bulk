@@ -63,14 +63,27 @@ export async function ensurePerson(
   displayName: string,
   avatarUrl: string | null,
 ): Promise<void> {
-  await asUser(discordId, async (db) => {
-    await db.query(
-      `insert into person (discord_id, display_name, avatar_url)
-       values ($1, $2, $3)
-       on conflict (discord_id) do nothing`,
-      [discordId, displayName, avatarUrl],
+  if (!discordId) throw new Error("ensurePerson called with no Discord id");
+  try {
+    await asUser(discordId, async (db) => {
+      await db.query(
+        `insert into person (discord_id, display_name, avatar_url)
+         values ($1, $2, $3)
+         on conflict (discord_id) do nothing`,
+        [discordId, displayName, avatarUrl],
+      );
+    });
+  } catch (cause) {
+    // The bare Postgres message ("new row violates row-level security policy") does not
+    // say which identity was asserted, which is the only thing that distinguishes a
+    // wrong policy from an unset session variable.
+    throw new Error(
+      `could not register Discord id ${JSON.stringify(discordId)}: ` +
+        (cause instanceof Error ? cause.message : String(cause)) +
+        " -- compare with `make doctor`, whose probe performs this same insert",
+      { cause },
     );
-  });
+  }
 }
 
 export interface Viewer {
