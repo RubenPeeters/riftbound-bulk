@@ -38,6 +38,7 @@ services:
       AUTH_SECRET: ${AUTH_SECRET}
       AUTH_DISCORD_ID: ${AUTH_DISCORD_ID}
       AUTH_DISCORD_SECRET: ${AUTH_DISCORD_SECRET}
+      AUTH_DEBUG: ${AUTH_DEBUG}
       AUTH_URL: ${APP_URL:?set APP_URL in .env}
       NODE_ENV: production
     expose:
