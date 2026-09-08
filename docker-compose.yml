@@ -1,7 +1,8 @@
 # Single-host deployment for a Hetzner box. Postgres, the Next.js app and Caddy for TLS.
 #
-# Caddy obtains and renews certificates automatically; point an A record at the box and
-# set DOMAIN in .env. Postgres is not published to the host: only the app reaches it.
+# APP_URL in .env decides how the site is reached and whether Caddy provisions TLS:
+# an https:// hostname gets a certificate, a http://<ip> serves plain HTTP with no DNS.
+# Postgres is not published to the host: only the app container reaches it.
 
 name: riftbound-db
 
@@ -34,7 +35,7 @@ services:
       AUTH_SECRET: ${AUTH_SECRET}
       AUTH_DISCORD_ID: ${AUTH_DISCORD_ID}
       AUTH_DISCORD_SECRET: ${AUTH_DISCORD_SECRET}
-      AUTH_URL: https://${DOMAIN}
+      AUTH_URL: ${APP_URL:?set APP_URL in .env}
       NODE_ENV: production
     expose:
       - "3000"
@@ -45,7 +46,7 @@ services:
     depends_on:
       - app
     environment:
-      DOMAIN: ${DOMAIN:?set DOMAIN in .env}
+      APP_URL: ${APP_URL:?set APP_URL in .env}
     ports:
       - "80:80"
       - "443:443"

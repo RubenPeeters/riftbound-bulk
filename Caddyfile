@@ -1,9 +1,18 @@
-{$DOMAIN} {
+# APP_URL is the single source of truth for how the site is reached. It carries the
+# scheme, which is what decides whether Caddy provisions a certificate:
+#
+#   https://riftbound.example.org   automatic TLS from Let's Encrypt (needs real DNS)
+#   http://203.0.113.10             plain HTTP on port 80, no TLS, no DNS needed
+#   https://203.0.113.10.sslip.io   sslip.io resolves to the embedded IP; see README
+#
+# The same value is handed to Auth.js as AUTH_URL, so the scheme stays consistent
+# between the proxy and the session cookies.
+
+{$APP_URL} {
 	encode zstd gzip
 	reverse_proxy app:3000
 
-	# The card index and every collection sit behind login; keep them out of indexes
-	# and out of referrer headers regardless.
+	# Everything here sits behind login; keep it out of indexes and referrers anyway.
 	header {
 		X-Robots-Tag "noindex, nofollow"
 		Referrer-Policy "strict-origin-when-cross-origin"

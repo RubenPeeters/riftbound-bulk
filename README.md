@@ -47,9 +47,33 @@ make dev
 
 ## Deploying to Hetzner
 
+`APP_URL` in `.env` decides how the site is reached, and its scheme decides whether Caddy
+provisions a certificate. There are three ways to run it, in increasing order of effort:
+
+| `APP_URL` | TLS | Needs |
+|---|---|---|
+| `http://203.0.113.10` | none | nothing at all |
+| `https://203.0.113.10.sslip.io` | Let's Encrypt | nothing, but see the caveat |
+| `https://riftbound.example.org` | Let's Encrypt | a real A record |
+
+**Plain IP, no TLS.** Works immediately with no domain and no DNS. Traffic is
+unencrypted, so it is for getting something running and for a trusted group on a trusted
+network, not for a launch. Auth.js takes its cookie policy from `APP_URL`, so an `http://`
+value keeps the session cookie non-secure and login still works.
+
+**sslip.io** resolves `<ip>.sslip.io` to the IP embedded in the name, so it is a real
+public hostname with zero setup and Let's Encrypt will issue for it. The caveat: sslip.io
+is **not** on the Public Suffix List, so Let's Encrypt treats every `*.sslip.io` name as
+one registered domain sharing a single quota of 50 certificates per week with everyone
+else on the internet using it. It may simply fail. Cheap to try, not something to depend
+on.
+
+**A real hostname** is the only option that is both encrypted and reliable. Worth doing
+before anyone else is invited.
+
 ```bash
-# on the box, with an A record already pointing at it
-cp .env.example .env          # set DOMAIN; Caddy gets certificates automatically
+# on the box
+cp .env.example .env          # set APP_URL and POSTGRES_PASSWORD at minimum
 make up                       # builds and starts Postgres, app and Caddy
 make db-migrate
 make load
@@ -63,6 +87,9 @@ make promote DISCORD_ID=<your discord user id>
 
 Nothing works before that step: a fresh database has no admin, so nobody can approve
 anyone, including you.
+
+Whatever `APP_URL` is, the Discord application's redirect URI has to match it exactly:
+`$APP_URL/api/auth/callback/discord`.
 
 Subsequent releases are `make deploy` (pull, rebuild, migrate). `make backup` writes a
 timestamped `pg_dump` to `backups/`; put it on a cron and copy it off the box, because a
