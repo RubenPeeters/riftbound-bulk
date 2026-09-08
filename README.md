@@ -5,9 +5,8 @@ own and, above all, **who lent what to whom**.
 
 ## Status
 
-Backend working: schema, card loader and 1189 cards in Postgres. The web application is
-a skeleton that proves the database wiring; sign-in and collection entry are not built.
-Read
+Backend working: schema, card loader and 1189 cards in Postgres. Discord sign-in and the
+approval gate are in. The card browser and collection entry are not built yet. Read
 [docs/design.md](docs/design.md) first: it covers what makes loan tracking hard, the
 class diagram, and the open questions. The schema in
 [db/migrations/0001_init.sql](db/migrations/0001_init.sql) is the single

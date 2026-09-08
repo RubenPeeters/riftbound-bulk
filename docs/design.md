@@ -465,15 +465,20 @@ application then *asserts* who they are with a transaction-scoped session variab
 
 ```sql
 begin;
-set local app.person_id = '<uuid>';
+set local app.discord_id = '<discord user id>';
 -- ... queries ...
 commit;
 ```
 
-In code this is `asPerson()` in [`lib/db.ts`](../lib/db.ts), and it is the only place
+The **Discord id** is asserted, not the person id. It is what the OAuth exchange
+verifies, and, decisively, it exists before the person row does: at first login there is
+no person id to assert and no way to look one up, because reading `person` requires
+already knowing which row is yours. `current_person()` resolves the assertion to a row.
+
+In code this is `asUser()` in [`lib/db.ts`](../lib/db.ts), and it is the only place
 that opens a connection to a domain table. Note that it calls
-`set_config('app.person_id', $1, true)` rather than interpolating a `SET LOCAL`
-statement: `set local app.person_id = $1` cannot take a bound parameter, and building
+`set_config('app.discord_id', $1, true)` rather than interpolating a `SET LOCAL`
+statement: `set local app.discord_id = $1` cannot take a bound parameter, and building
 that string by hand would put an injection point on the value that decides what the
 caller may see.
 

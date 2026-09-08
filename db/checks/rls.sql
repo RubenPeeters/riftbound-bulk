@@ -11,7 +11,7 @@ begin;
 
 insert into person (discord_id, display_name)
 values ('rls-probe', 'RLS Probe')
-returning id as probe \gset
+returning discord_id as probe \gset
 
 \echo ''
 \echo '=== privileges (verb level, independent of policies) ==='
@@ -26,16 +26,16 @@ set local role app_user;
 \echo 'expect 0 cards, 0 people'
 select (select count(*) from card) as cards, (select count(*) from person) as people;
 
-set local app.person_id = :'probe';
+set local app.discord_id = :'probe';
 
 \echo '=== pending member: sees nothing but itself ==='
 \echo 'expect 0 cards, 1 person'
 select (select count(*) from card) as cards, (select count(*) from person) as people;
 
 reset role;
-update person set state = 'approved', approved_at = now() where id = :'probe';
+update person set state = 'approved', approved_at = now() where discord_id = :'probe';
 set local role app_user;
-set local app.person_id = :'probe';
+set local app.discord_id = :'probe';
 
 \echo '=== approved member: sees the whole index ==='
 \echo 'expect 1189 printings, 1 person visible so far'

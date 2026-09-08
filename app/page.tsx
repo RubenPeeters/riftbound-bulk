@@ -1,31 +1,45 @@
-import { asPerson } from "@/lib/db";
+import { auth, signIn, signOut } from "@/auth";
+import { viewer } from "@/lib/db";
 
-// Must not be prerendered: the Docker build runs with no database reachable, so a static
-// render would bake "not connected" into the page for the life of the image.
+// Never prerender: this reads the session and the database.
 export const dynamic = "force-dynamic";
 
-/**
- * Counts read as the owner would see them are not available to the app, by design: this
- * page asks Postgres directly with no identity asserted, so the numbers it shows are the
- * ones an anonymous visitor is allowed to see. They should be zero. That is the point.
- */
-async function anonymousVisibility() {
-  return asPerson(null, async (db) => {
-    const { rows } = await db.query<{ printings: string; people: string }>(
-      "select (select count(*) from printing) as printings, (select count(*) from person) as people",
-    );
-    return rows[0];
-  });
+function SignIn() {
+  return (
+    <form
+      action={async () => {
+        "use server";
+        await signIn("discord");
+      }}
+    >
+      <button
+        type="submit"
+        className="rounded-md bg-indigo-500 px-4 py-2 text-sm font-medium hover:bg-indigo-400"
+      >
+        Sign in with Discord
+      </button>
+    </form>
+  );
+}
+
+function SignOut() {
+  return (
+    <form
+      action={async () => {
+        "use server";
+        await signOut();
+      }}
+    >
+      <button type="submit" className="text-sm text-neutral-400 underline hover:text-neutral-200">
+        Sign out
+      </button>
+    </form>
+  );
 }
 
 export default async function Home() {
-  let visible: { printings: string; people: string } | null = null;
-  let error: string | null = null;
-  try {
-    visible = await anonymousVisibility();
-  } catch (e) {
-    error = e instanceof Error ? e.message : String(e);
-  }
+  const session = await auth();
+  const me = await viewer(session?.discordId ?? null);
 
   return (
     <main className="mx-auto max-w-2xl px-6 py-16">
@@ -35,20 +49,34 @@ export default async function Home() {
       </p>
 
       <section className="mt-10 rounded-lg border border-neutral-800 p-5">
-        <h2 className="text-sm font-medium text-neutral-300">Database</h2>
-        {error ? (
-          <p className="mt-2 font-mono text-sm text-red-400">not connected: {error}</p>
+        {!session ? (
+          <>
+            <h2 className="text-sm font-medium text-neutral-300">Not signed in</h2>
+            <p className="mt-2 mb-4 text-sm text-neutral-500">
+              Anyone can register. An admin approves before anything becomes visible.
+            </p>
+            <SignIn />
+          </>
+        ) : me?.state === "approved" ? (
+          <>
+            <h2 className="text-sm font-medium text-neutral-300">
+              Signed in as {me.displayName}
+              {me.role === "admin" ? " (admin)" : ""}
+            </h2>
+            <p className="mt-2 mb-4 text-sm text-neutral-400">
+              Approved. The card browser and collection entry are not built yet.
+            </p>
+            <SignOut />
+          </>
         ) : (
           <>
-            <p className="mt-2 text-sm text-neutral-400">
-              Connected. Visible to an anonymous caller:{" "}
-              <span className="font-mono text-neutral-100">{visible?.printings}</span> printings,{" "}
-              <span className="font-mono text-neutral-100">{visible?.people}</span> people.
+            <h2 className="text-sm font-medium text-amber-300">Waiting for approval</h2>
+            <p className="mt-2 mb-4 text-sm text-neutral-400">
+              Signed in as {me?.displayName ?? session.user?.name}. Your account is{" "}
+              <span className="font-mono">{me?.state ?? "pending"}</span>, so nothing is visible
+              yet. Ask Ruben to approve you.
             </p>
-            <p className="mt-2 text-sm text-neutral-500">
-              Both should be zero: row-level security denies everything until an approved
-              member is asserted. Sign-in is not built yet.
-            </p>
+            <SignOut />
           </>
         )}
       </section>
