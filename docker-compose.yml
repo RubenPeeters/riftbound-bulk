@@ -58,7 +58,22 @@ services:
       - caddy_data:/data
       - caddy_config:/config
 
+  # One-shot Node runner for scripts/, so the host needs no Node toolchain. It joins the
+  # default network, which is why LOADER_DATABASE_URL points at `db` rather than
+  # 127.0.0.1. The profile keeps it out of `docker compose up`.
+  tools:
+    image: node:22-alpine
+    profiles: ["tools"]
+    working_dir: /w
+    volumes:
+      - .:/w
+      - npm_cache:/root/.npm
+    env_file: .env
+    environment:
+      LOADER_DATABASE_URL: postgres://${POSTGRES_USER:-riftbound}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-riftbound}
+
 volumes:
   pgdata:
+  npm_cache:
   caddy_data:
   caddy_config:

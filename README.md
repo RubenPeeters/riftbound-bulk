@@ -35,15 +35,28 @@ the card loader connect as the owner and bypass it. `app_user` must never own th
 
 ```bash
 cp .env.example .env          # fill in POSTGRES_PASSWORD, AUTH_SECRET, Discord creds
+make db-migrate               # starts Postgres and applies db/migrations/ IN ORDER
+make load                     # load the committed card data into Postgres
 make scaffold                 # once, creates the Next.js app
-make install
-make db-migrate               # starts Postgres and applies db/migrations/
-make cards                    # fetch and vendor card data from Riot's feed
-make load                     # load it into Postgres
 make dev
 ```
 
+`make db-migrate` must run before `make load`: the loader upserts into tables the
+migrations create. Card data is already committed, so `make cards` is only needed when
+Riot ships a new set.
+
 `make` on its own lists every target.
+
+### The host needs no Node
+
+`make load`, `make cards` and `make collisions` run inside a pinned `node:22-alpine`
+container on the compose network, so a fresh server needs only Docker. That also keeps
+the box and your laptop on the same Node.
+
+The container runs as root and writes `node_modules/` into the bind mount, which is
+harmless on a server but leaves root-owned files on a workstation. If you have Node
+installed locally, bypass the container with `make NODE= load` and set
+`LOADER_DATABASE_URL` to the published loopback port instead.
 
 ## Deploying to Hetzner
 

@@ -4,8 +4,11 @@
 
 PROJECT_NAME = riftbound-db
 SHELL := /bin/bash
-NODE_PKG := npm
-SETS ?= OGN
+
+# Scripts run in a pinned Node container so the host needs no toolchain: the server has
+# Docker for Postgres anyway, and the laptop and the box then run the same Node.
+# Override with `make NODE= load` to use a host-installed Node instead.
+NODE ?= docker compose run --rm tools
 
 .DEFAULT_GOAL := help
 
@@ -16,7 +19,7 @@ SETS ?= OGN
 ## Install Node dependencies
 .PHONY: install
 install:
-	$(NODE_PKG) install
+	$(NODE) npm install
 
 ## Scaffold the Next.js app (run once, on an empty repo)
 .PHONY: scaffold
@@ -24,7 +27,7 @@ scaffold:
 	@test ! -f next.config.mjs || { echo "Next.js app already scaffolded"; exit 1; }
 	@echo ">>> create-next-app merges into the existing package.json; re-run 'make install' after."
 	npx create-next-app@latest . --typescript --tailwind --eslint --app --src-dir=false --import-alias "@/*"
-	$(NODE_PKG) install pg next-auth@beta
+	npm install pg next-auth@beta
 	@echo ">>> Now set output: 'standalone' in next.config.mjs (the Dockerfile needs it)"
 
 #################################################################################
@@ -34,17 +37,17 @@ scaffold:
 ## Fetch card data and vendor it into data/cards/ as reviewable JSON
 .PHONY: cards
 cards:
-	npx tsx scripts/fetch-cards.ts --sets "$(SETS)" --out data/cards
+	$(NODE) npx tsx scripts/fetch-cards.ts --out data/cards
 
 ## Load vendored card data into Postgres (connects as the owner, bypassing RLS)
 .PHONY: load
 load:
-	npx tsx scripts/load-cards.ts --in data/cards
+	$(NODE) npx tsx scripts/load-cards.ts --in data/cards
 
 ## Report card ids whose printings disagree on rules text. Needs no database.
 .PHONY: collisions
 collisions:
-	npx tsx scripts/load-cards.ts --in data/cards --dry-run
+	$(NODE) npx tsx scripts/load-cards.ts --in data/cards --dry-run
 
 ## Confirm the fetcher is deterministic: two runs must be byte-identical
 .PHONY: determinism
@@ -107,27 +110,27 @@ backup:
 ## Run the dev server
 .PHONY: dev
 dev:
-	$(NODE_PKG) run dev
+	npm run dev
 
 ## Production build
 .PHONY: build
 build:
-	$(NODE_PKG) run build
+	npm run build
 
 ## Lint
 .PHONY: lint
 lint:
-	$(NODE_PKG) run lint
+	$(NODE) npm run lint
 
 ## Typecheck without emitting
 .PHONY: typecheck
 typecheck:
-	npx tsc --noEmit
+	$(NODE) npx tsc --noEmit
 
 ## Run tests (ledger invariants live here)
 .PHONY: test
 test:
-	npx vitest run
+	$(NODE) npx vitest run
 
 ## Cross-check allocate_lend() against an independent recomputation
 .PHONY: allocation-oracle
