@@ -139,6 +139,19 @@ Note also that `showcase` is a *rarity* in the feed (120 cards), not a finish. A
 arts are separate printings with their own collector numbers, so they are already
 distinguishable without any of this.
 
+### 1.3b The collector number is not a number
+
+`OGN-007` and `OGN-007a` are both collector number 7. The alternate-art suffix is the
+only thing separating them, and 162 of 1189 printings collide this way. Others carry no
+plain number at all (`VEN-R04`, `SFD-T03`, `VEN-SP6`) or a star (`SFD-232*`).
+
+So the printed designator is its own column, `collector_code`, and it is what makes a
+printing unique within a set and language. `collector_number` survives only for sorting,
+because 7 orders correctly against 10 and `007a` does not.
+
+The feed's own `collectorNumber` field really is an integer, which is exactly why the
+first schema got this wrong: the source's type was mistaken for the domain's.
+
 ### 1.4 Everything is self-reported, so trust is the real design problem
 
 Nobody can verify a claim. Ruben says he lent it; Bob says he gave it back. This is not a
@@ -294,6 +307,7 @@ classDiagram
 
     class Printing {
         +text id
+        +text collector_code
         +int collector_number
         +text printed_code
         +text rarity

@@ -32,6 +32,10 @@ for (let i = 2; i < process.argv.length; i += 2) {
 const IN = args.in ?? "data/cards";
 const DRY = "dry-run" in args;
 
+/** 'OGN-007a/298' -> '007a'; 'VEN-R04' -> 'R04'. See db/migrations/0003. */
+const collectorCode = (publicCode: string) =>
+  publicCode.replace(/^[A-Za-z]+-/, "").replace(/\/\d+$/, "");
+
 interface Card {
   id: string; publicCode: string; set: string; setName: string;
   collectorNumber: number; setTotal: number | null;
@@ -116,13 +120,14 @@ async function main() {
     for (const c of cards) {
       await db.query(
         `insert into printing (id, card_id, expansion_code, collector_number,
-                               printed_code, rarity, illustrator, image_url, language_code)
-         values ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+                               collector_code, printed_code, rarity, illustrator,
+                               image_url, language_code)
+         values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
          on conflict (id) do update set
            card_id = excluded.card_id, rarity = excluded.rarity,
            illustrator = excluded.illustrator, image_url = excluded.image_url`,
-        [c.id, c.slug, c.set, c.collectorNumber, c.publicCode, c.rarity,
-         c.illustrator, c.imageUrl, "en-us"]);
+        [c.id, c.slug, c.set, c.collectorNumber, collectorCode(c.publicCode),
+         c.publicCode, c.rarity, c.illustrator, c.imageUrl, "en-us"]);
     }
 
     await db.query("commit");
