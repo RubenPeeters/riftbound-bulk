@@ -95,6 +95,11 @@ doctor:
 doctor-app:
 	@./scripts/probe-app.sh
 
+## Assert the ledger folds to the right holdings. Rolls back; leaves no data.
+.PHONY: check-ledger
+check-ledger:
+	@$(PSQL) -f - < db/checks/ledger.sql
+
 ## Bisect which part of the registration insert the policy rejects
 .PHONY: doctor-bisect
 doctor-bisect:

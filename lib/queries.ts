@@ -135,3 +135,48 @@ export async function filterOptions(discordId: string | null) {
     };
   });
 }
+
+export interface EntryRow {
+  printingId: string;
+  printedCode: string;
+  name: string;
+  rarity: string | null;
+  imageUrl: string | null;
+  quantity: number;
+}
+
+/**
+ * One set, with how many of each printing the caller owns and holds themselves.
+ *
+ * Holdings are keyed by owner AND holder, so this deliberately counts only rows where
+ * both are the caller: cards lent out are still owned, but entering a collection is
+ * about what is in front of you. Conditions are summed, since entry does not ask.
+ */
+export async function listForEntry(
+  discordId: string | null,
+  set: string,
+  finish: string,
+): Promise<EntryRow[]> {
+  return asUser(discordId, async (db) => {
+    const { rows } = await db.query<EntryRow>(
+      `select p.id                        as "printingId",
+              p.printed_code              as "printedCode",
+              c.name,
+              p.rarity,
+              p.image_url                 as "imageUrl",
+              coalesce(h.qty, 0)::int     as quantity
+         from printing p
+         join card c on c.id = p.card_id
+         left join (
+              select printing_id, sum(quantity) as qty
+                from holding
+               where owner_id = me() and holder_id = me() and finish = $2
+               group by printing_id
+         ) h on h.printing_id = p.id
+        where p.expansion_code = $1
+        order by p.collector_number, p.collector_code`,
+      [set, finish],
+    );
+    return rows;
+  });
+}
