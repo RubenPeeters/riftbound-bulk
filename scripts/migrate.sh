@@ -24,13 +24,13 @@ pending=0
 for f in db/migrations/*.sql; do
     n=$(basename "$f")
     if grep -qxF "$n" <<<"$applied"; then
-        printf '   skip   %s\n' "$n"
+        printf -- '   skip   %s\n' "$n"
         continue
     fi
-    printf '-> apply  %s\n' "$n"
+    printf -- '-> apply  %s\n' "$n"
     {
         cat "$f"
-        printf "\ninsert into schema_migrations (filename) values ('%s');\n" "$n"
+        printf -- "\ninsert into schema_migrations (filename) values ('%s');\n" "$n"
     } | "${PSQL[@]}" --single-transaction -f -
     pending=$((pending + 1))
 done
