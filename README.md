@@ -45,6 +45,11 @@ make dev
 migrations create. Card data is already committed, so `make cards` is only needed when
 Riot ships a new set.
 
+Migrations are tracked in a `schema_migrations` table, so each file in `db/migrations/`
+runs exactly once and `make db-migrate` is safe to re-run: it applies what is pending and
+skips the rest. Each migration and the record of it are one transaction, so a failure
+leaves neither a half-applied schema nor a false record.
+
 `make` on its own lists every target.
 
 ### The host needs no Node

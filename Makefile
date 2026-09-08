@@ -77,10 +77,10 @@ POSTGRES_DB   ?= riftbound
 db-up:
 	docker compose up -d --wait db
 
-## Apply every migration in db/migrations in order
+## Apply pending migrations from db/migrations (each file runs exactly once)
 .PHONY: db-migrate
 db-migrate: db-up
-	@for f in db/migrations/*.sql; do echo "-> $$f"; $(PSQL) -f - < $$f; done
+	@./scripts/migrate.sh
 
 ## Drop and rebuild the database from scratch. Destroys all card and ledger data.
 .PHONY: db-reset
