@@ -64,6 +64,14 @@ prepare ins (text, text, text) as
 select set_config('app.discord_id', 'bisect-f', true) as asserted;
 execute ins ('bisect-f', 'F', null);
 
+\echo '--- G: read-then-insert, which is what lib/db.ts now does ---'
+select set_config('app.discord_id', 'bisect-g', true) as asserted;
+select 1 from person where discord_id = 'bisect-g';
+insert into person (discord_id, display_name, avatar_url) values ('bisect-g', 'G', null);
+
+\echo '--- H: G again, with the row already present (the repeat-login path) ---'
+select 1 from person where discord_id = 'bisect-g';
+
 \echo ''
 \echo '=== what survived (only the variants that passed) ==='
 select discord_id, display_name from person where discord_id like 'bisect-%' order by 1;

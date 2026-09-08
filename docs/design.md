@@ -152,6 +152,32 @@ because 7 orders correctly against 10 and `007a` does not.
 The feed's own `collectorNumber` field really is an integer, which is exactly why the
 first schema got this wrong: the source's type was mistaken for the domain's.
 
+### 1.3c `ON CONFLICT` is unusable on a table whose SELECT policy depends on the row
+
+Registration is a read followed by an insert, not an upsert, and the reason is worth
+recording because the failure is opaque.
+
+`insert ... on conflict (discord_id) do nothing` on `person` is refused outright, with
+`new row violates row-level security policy`. The identical insert without the
+`ON CONFLICT` clause succeeds, whether sent as plain SQL or through the extended
+protocol; adding or removing columns changes nothing. `make doctor-bisect` runs the
+variants side by side.
+
+The likely mechanism: resolving a conflict requires reading the arbiter index, and the
+SELECT policy on `person` is `id = current_person() or is_member()`. At first
+registration `current_person()` is null, because it resolves *through the very row being
+inserted*, so nothing on the table is visible and the speculative insertion cannot be
+checked. This is a hypothesis about the internals; the behaviour itself is reproducible.
+
+Reading first works for exactly the reason the conflict path does not: once the row
+exists, `current_person()` resolves to it and the SELECT policy admits it. The race
+between two simultaneous first logins is caught as a unique violation, which is the
+desired end state anyway.
+
+The general shape is worth remembering: **a policy that resolves identity through the
+table it guards cannot use that table's conflict machinery during the insert that
+creates the identity.**
+
 ### 1.4 Everything is self-reported, so trust is the real design problem
 
 Nobody can verify a claim. Ruben says he lent it; Bob says he gave it back. This is not a
