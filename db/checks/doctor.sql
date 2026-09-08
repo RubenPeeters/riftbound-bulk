@@ -1,7 +1,11 @@
--- What state is this database actually in? Read-only.
+-- What state is this database actually in?
+--
+-- Read-only: the one write is a registration probe inside a transaction that rolls back.
 --
 --   make doctor
 
+-- Diagnostics must report failures, not abort on the first one.
+\set ON_ERROR_STOP off
 \pset border 2
 \echo ''
 \echo '=== migrations applied ==='
@@ -36,3 +40,16 @@ select (select count(*) from expansion) as sets,
        (select count(*) from card)      as cards,
        (select count(*) from printing)  as printings,
        (select count(*) from person)    as people;
+
+\echo ''
+\echo '=== registration probe: exactly what the app does at first sign-in ==='
+\echo 'If this fails, the policy is the problem. If it succeeds, the policy is fine and'
+\echo 'the app is not asserting app.discord_id (stale image, or an old build).'
+begin;
+set local role app_user;
+select set_config('app.discord_id', 'doctor-probe', true) as asserted;
+insert into person (discord_id, display_name) values ('doctor-probe', 'Doctor Probe');
+\echo '--> registration insert SUCCEEDED (policy is correct)'
+rollback;
+\echo ''
+\echo 'probe rolled back; nothing was kept.'
