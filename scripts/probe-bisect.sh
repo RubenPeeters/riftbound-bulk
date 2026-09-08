@@ -28,26 +28,45 @@ select has_function_privilege('app_user', 'current_discord_id()', 'execute') as 
        has_function_privilege('app_user', 'current_person()', 'execute')     as exec_person;
 
 begin;
-select set_config('app.discord_id', 'bisect', true) as asserted;
+
+-- Each variant asserts its OWN id. Asserting once and then inserting different ids makes
+-- every variant fail on `discord_id = current_discord_id()`, which is the policy behaving
+-- correctly and tells us nothing about the statement shape.
 
 \echo ''
-\echo '--- A: minimal insert (this is what make doctor does) ---'
-insert into person (discord_id, display_name) values ('bisect', 'A');
+\echo '--- A: minimal insert (what make doctor does) ---'
+select set_config('app.discord_id', 'bisect-a', true) as asserted;
+insert into person (discord_id, display_name) values ('bisect-a', 'A');
 
 \echo '--- B: plus avatar_url ---'
+select set_config('app.discord_id', 'bisect-b', true) as asserted;
 insert into person (discord_id, display_name, avatar_url) values ('bisect-b', 'B', null);
 
 \echo '--- C: minimal plus ON CONFLICT ---'
+select set_config('app.discord_id', 'bisect-c', true) as asserted;
 insert into person (discord_id, display_name) values ('bisect-c', 'C')
 on conflict (discord_id) do nothing;
 
 \echo '--- D: the full statement lib/db.ts uses ---'
+select set_config('app.discord_id', 'bisect-d', true) as asserted;
 insert into person (discord_id, display_name, avatar_url) values ('bisect-d', 'D', null)
 on conflict (discord_id) do nothing;
 
 \echo '--- E: state and role written out explicitly ---'
+select set_config('app.discord_id', 'bisect-e', true) as asserted;
 insert into person (discord_id, display_name, state, role)
 values ('bisect-e', 'E', 'pending', 'member');
+
+\echo '--- F: parameterised, as the pg driver sends it ---'
+prepare ins (text, text, text) as
+  insert into person (discord_id, display_name, avatar_url) values ($1, $2, $3)
+  on conflict (discord_id) do nothing;
+select set_config('app.discord_id', 'bisect-f', true) as asserted;
+execute ins ('bisect-f', 'F', null);
+
+\echo ''
+\echo '=== what survived (only the variants that passed) ==='
+select discord_id, display_name from person where discord_id like 'bisect-%' order by 1;
 
 rollback;
 \echo ''
