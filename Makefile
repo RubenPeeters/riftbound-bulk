@@ -18,8 +18,14 @@ NODE ?= docker compose run --rm tools
 
 ## Install Node dependencies
 .PHONY: install
-install:
+install: node_modules
+
+# Real target, not phony: anything needing dependencies declares it, so `make load` on a
+# fresh clone installs rather than failing on a missing package. `touch` bumps the mtime
+# because npm does not always update the directory's own timestamp.
+node_modules: package.json
 	$(NODE) npm install
+	@touch node_modules
 
 ## Scaffold the Next.js app (run once, on an empty repo)
 .PHONY: scaffold
@@ -36,18 +42,18 @@ scaffold:
 
 ## Fetch card data and vendor it into data/cards/ as reviewable JSON
 .PHONY: cards
-cards:
-	$(NODE) npx tsx scripts/fetch-cards.ts --out data/cards
+cards: node_modules
+	$(NODE) npx --yes tsx scripts/fetch-cards.ts --out data/cards
 
 ## Load vendored card data into Postgres (connects as the owner, bypassing RLS)
 .PHONY: load
-load:
-	$(NODE) npx tsx scripts/load-cards.ts --in data/cards
+load: node_modules
+	$(NODE) npx --yes tsx scripts/load-cards.ts --in data/cards
 
 ## Report card ids whose printings disagree on rules text. Needs no database.
 .PHONY: collisions
-collisions:
-	$(NODE) npx tsx scripts/load-cards.ts --in data/cards --dry-run
+collisions: node_modules
+	$(NODE) npx --yes tsx scripts/load-cards.ts --in data/cards --dry-run
 
 ## Confirm the fetcher is deterministic: two runs must be byte-identical
 .PHONY: determinism
@@ -119,18 +125,18 @@ build:
 
 ## Lint
 .PHONY: lint
-lint:
+lint: node_modules
 	$(NODE) npm run lint
 
 ## Typecheck without emitting
 .PHONY: typecheck
-typecheck:
-	$(NODE) npx tsc --noEmit
+typecheck: node_modules
+	$(NODE) npx --yes tsc --noEmit
 
 ## Run tests (ledger invariants live here)
 .PHONY: test
-test:
-	$(NODE) npx vitest run
+test: node_modules
+	$(NODE) npx --yes vitest run
 
 ## Cross-check allocate_lend() against an independent recomputation
 .PHONY: allocation-oracle
