@@ -277,6 +277,7 @@ export async function defaultPrintings(
 
 export interface Holder {
   printingId: string;
+  personId: string;
   displayName: string;
   quantity: number;
 }
@@ -298,6 +299,7 @@ export async function holdersOf(
   return asUser(discordId, async (db) => {
     const { rows } = await db.query<Holder>(
       `select h.printing_id as "printingId",
+              pe.id::text as "personId",
               pe.display_name as "displayName",
               sum(h.quantity)::int as quantity
          from holding h
@@ -305,7 +307,7 @@ export async function holdersOf(
         where h.printing_id = any($1::text[])
           and h.finish = $2
           and h.owner_id = h.holder_id
-        group by h.printing_id, pe.display_name
+        group by h.printing_id, pe.id, pe.display_name
         having sum(h.quantity) > 0
         order by sum(h.quantity) desc, pe.display_name`,
       [printingIds, finish],
@@ -555,6 +557,125 @@ export async function loanBundles(
         where ${mineIs} and t.closed_at is null
         group by t.id, pe.display_name, t.purpose, t.opened_at, t.due_at, a.state, a.note
         order by t.opened_at desc`,
+    );
+    return rows;
+  });
+}
+
+export interface Profile {
+  id: string;
+  displayName: string;
+  avatarUrl: string | null;
+  role: "member" | "admin";
+  /** Everything they own, including what is currently lent out. */
+  owned: number;
+  /** Distinct printings they own. */
+  distinct: number;
+  /** Owned and in their own hands, so borrowable. */
+  available: number;
+  /** Of theirs, currently with someone else. */
+  lentOut: number;
+}
+
+export async function memberProfile(
+  discordId: string | null,
+  personId: string,
+): Promise<Profile | null> {
+  return asUser(discordId, async (db) => {
+    const { rows } = await db.query<Profile>(
+      `select p.id, p.display_name as "displayName", p.avatar_url as "avatarUrl", p.role,
+              coalesce((select sum(h.quantity) from holding h
+                         where h.owner_id = p.id), 0)::int as owned,
+              coalesce((select count(distinct h.printing_id) from holding h
+                         where h.owner_id = p.id and h.quantity > 0), 0)::int as distinct,
+              coalesce((select sum(h.quantity) from holding h
+                         where h.owner_id = p.id and h.holder_id = p.id), 0)::int as available,
+              coalesce((select sum(h.quantity) from holding h
+                         where h.owner_id = p.id and h.holder_id <> p.id), 0)::int as "lentOut"
+         from person p
+        where p.id = $1 and p.state = 'approved'`,
+      [personId],
+    );
+    return rows[0] ?? null;
+  });
+}
+
+export interface ProfileCardRow {
+  printingId: string;
+  printedCode: string;
+  set: string;
+  name: string;
+  imageUrl: string | null;
+  theirs: number;
+  mine: number;
+}
+
+/**
+ * One person's collection, alongside what the viewer has of each.
+ *
+ * Finishes are summed: a profile is for looking, not for entry, and splitting foils here
+ * would triple the rows for a distinction nobody is browsing by.
+ *
+ * The `gap` filter is the reason this page exists. "What does Bob have that I do not" is
+ * the question that turns a collection into a loan.
+ */
+export async function personHoldings(
+  discordId: string | null,
+  personId: string,
+  f: { q?: string; set?: string; gap?: boolean; page?: number },
+): Promise<{ rows: ProfileCardRow[]; total: number }> {
+  const page = Math.max(1, f.page ?? 1);
+  return asUser(discordId, async (db) => {
+    const base = `
+      from printing p
+      join card c on c.id = p.card_id
+      join (select printing_id, sum(quantity) as qty from holding
+             where owner_id = $1 and holder_id = $1
+             group by printing_id) t on t.printing_id = p.id and t.qty > 0
+      left join (select printing_id, sum(quantity) as qty from holding
+                  where owner_id = me() and holder_id = me()
+                  group by printing_id) m on m.printing_id = p.id
+      where ($2::text is null or c.name ilike '%' || $2 || '%')
+        and ($3::text is null or p.expansion_code = $3)
+        and ($4::boolean is not true or coalesce(m.qty, 0) = 0)`;
+    const params = [personId, f.q ?? null, f.set ?? null, f.gap ?? false];
+
+    const counted = await db.query<{ total: string }>(`select count(*) as total ${base}`, params);
+    const { rows } = await db.query<ProfileCardRow>(
+      `select p.id as "printingId", p.printed_code as "printedCode",
+              p.expansion_code as "set", c.name, p.image_url as "imageUrl",
+              t.qty::int as theirs, coalesce(m.qty, 0)::int as mine
+       ${base}
+        order by c.name, p.expansion_code, p.collector_number
+        limit ${PAGE_SIZE} offset ${(page - 1) * PAGE_SIZE}`,
+      params,
+    );
+    return { rows, total: Number(counted.rows[0]?.total ?? 0) };
+  });
+}
+
+export interface MemberSummary {
+  id: string;
+  displayName: string;
+  avatarUrl: string | null;
+  role: "member" | "admin";
+  owned: number;
+  distinct: number;
+  isMe: boolean;
+}
+
+export async function memberList(discordId: string | null): Promise<MemberSummary[]> {
+  return asUser(discordId, async (db) => {
+    const { rows } = await db.query<MemberSummary>(
+      `select p.id, p.display_name as "displayName", p.avatar_url as "avatarUrl", p.role,
+              coalesce(sum(h.quantity), 0)::int as owned,
+              count(distinct h.printing_id) filter (where h.quantity > 0)::int as distinct,
+              (p.id = me()) as "isMe"
+         from person p
+         left join holding h on h.owner_id = p.id
+        where p.state = 'approved'
+        group by p.id, p.display_name, p.avatar_url, p.role
+        order by (p.id = me()) desc, p.display_name`,
     );
     return rows;
   });

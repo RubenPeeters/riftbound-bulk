@@ -1,8 +1,8 @@
-- add option to copy a decklist, and see which cards you are missing.
+- add option to copy a decklist, and see which cards you are missing.  [done: /decklist]
 - link to riftbound.gg, riftdecks.gg to check which one of the decks you can make
 - show prices of the decks you own
-- save your own decks, which can be shared with others
-- look at someone elses collection, on their profile
+- save your own decks, which can be shared with others  [done: /decks]
+- look at someone elses collection, on their profile  [done: /people]
 ---
 
 ## Notes on the above (Claude, 2026-09-09)

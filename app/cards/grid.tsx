@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
+import Link from "next/link";
 import { saveQuantities } from "./actions";
 import type { CardRow, Holder } from "@/lib/queries";
 
@@ -165,10 +166,18 @@ export default function Grid({
               </p>
               <p className="font-mono text-[10px] text-neutral-600">{r.printedCode}</p>
               {n === 0 && (holders[r.printingId]?.length ?? 0) > 0 && (
-                <p className="mt-1 truncate text-[10px] text-sky-400/80" title="Could lend you this">
-                  {holders[r.printingId]
-                    .map((h) => `${h.displayName} ×${h.quantity}`)
-                    .join(", ")}
+                <p className="mt-1 truncate text-[10px]" title="Could lend you this">
+                  {holders[r.printingId].map((h, i) => (
+                    <span key={h.personId}>
+                      {i > 0 && <span className="text-neutral-700">, </span>}
+                      <Link
+                        href={`/people/${h.personId}`}
+                        className="text-sky-400/80 hover:text-sky-300 hover:underline"
+                      >
+                        {h.displayName} ×{h.quantity}
+                      </Link>
+                    </span>
+                  ))}
                 </p>
               )}
 

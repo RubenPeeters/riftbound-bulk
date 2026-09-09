@@ -132,6 +132,7 @@ app/collection/              redirect, kept so old links work
 app/decklist/                paste a list, see what is missing, or claim it as owned
 app/decks/                   saved decks, visible to the group, missing counted for you
 app/loans/                   who has my cards, what I owe, and lending
+app/people/                  everyone's collection, and what they have that you lack
 lib/decklist.ts              the parser (pure; tests/decklist.ts covers it)
 lib/queries.ts               every read the pages do
 lib/db.ts                    asPerson(): the transaction wrapper RLS depends on
