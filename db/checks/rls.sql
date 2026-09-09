@@ -41,7 +41,8 @@ set local role app_user;
 set local app.discord_id = :'probe';
 
 \echo '=== approved member: sees the whole index ==='
-\echo 'expect 1189 printings, 1 person visible so far'
+\echo 'expect every printing, and every member of the group'
+\echo '(the person count grows as people join; it is the pending case above that must be 1)'
 select (select count(*) from printing) as printings, (select count(*) from person) as people;
 
 reset role;
