@@ -169,10 +169,10 @@ sharing a name would break that, so `make collisions` reports every id whose pri
 disagree on rules text. It needs no database.
 
 Comparing raw text is useless here: alternate-art printings drop parenthetical reminder
-text, which flags 83 of 935 names. Normalising that away leaves **18** real cases, mostly
-basic runes reprinted across sets. Each needs a human decision — same card with errata, or
-two different cards — and genuinely distinct ones get a `card_alias` row. The loader
-reports and never guesses.
+text, which flags 83 of 935 names. Normalising that away leaves 18, and those 18 have been
+checked: every one is the same card printed more than once, so `slug(name)` collapsing them
+is correct and **no `card_alias` rows are needed**. The check stays in place for future
+sets, where a genuine name clash would show up the same way.
 
 ## Licensing
 

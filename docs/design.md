@@ -13,7 +13,8 @@ Decisions taken, all of them Ruben's:
 | Copy tracking | **Wanted by the group**, not a personal feature. Phase P3 is committed, not speculative. |
 | Prices | **Cardmarket** |
 | Deployment | **Registration open, membership approved.** Nothing is visible without login and approval (§3) |
-| Mixed-stock lends | **Own stock first**, with an override (see §1.3) |
+| Mixed-stock lends | **Own stock first** (§1.3), though re-lending is now forbidden outright |
+| Re-lending | **Not allowed without asking.** Only the owner may record a lend of their card (§1.3d) |
 
 ---
 
@@ -135,9 +136,18 @@ One consequence: **`finish` has no authoritative vocabulary.** `normal` and `foi
 assumed, but Riftbound's actual premium treatments cannot be read off this feed and need
 confirming against physical product before the entry UI hard-codes a dropdown.
 
-Note also that `showcase` is a *rarity* in the feed (120 cards), not a finish. Alternate
-arts are separate printings with their own collector numbers, so they are already
-distinguishable without any of this.
+Note also that `showcase` is a *rarity* in the feed (120 cards), not a finish, and this
+was checked rather than assumed. All 102 printings whose collector code ends in `a` have a
+plain twin at the same number, and **all 102 have different art from that twin**, usually a
+different illustrator and a different rarity: `OGN-007` is a common by Greg Ghielmetti and
+Leah Chen, `OGN-007a` a showcase by Fairfoul. The `a` suffix therefore marks a separate
+printing, not a finish of the same one, which is precisely what the model already
+represents: one `card`, several `printing` rows.
+
+That also settles the 18 identifiers §1.5 flagged for a human decision. They are the same
+card printed more than once, so `slug(name)` collapsing them is correct and no
+`card_alias` rows are needed. What differs is reminder text, which alternate-art printings
+omit for space.
 
 ### 1.3b The collector number is not a number
 
@@ -177,6 +187,26 @@ desired end state anyway.
 The general shape is worth remembering: **a policy that resolves identity through the
 table it guards cannot use that table's conflict machinery during the insert that
 creates the identity.**
+
+### 1.3d Re-lending requires asking, and that removes the hard case
+
+Group decision: Bob may not lend Ruben's card to Carla without asking. This is encoded as
+a constraint rather than a convention: a `lend` event must have `owner_id = from_id`, so
+only the owner can record a lend of their own card. If Carla wants a card Bob is holding
+for Ruben, **Ruben records it, and Ruben recording it is the consent.** No separate
+request-and-approve flow is required to make the rule real.
+
+It is a `CHECK` rather than a policy, so it binds the owner role and the loader as well as
+`app_user`. Only `lend` is constrained: a `return` legitimately has `from_id` set to the
+borrower while ownership stays with the lender.
+
+**This dissolves §1.3.** The mixed-stock ambiguity arose only when a lender held
+indistinguishable copies belonging to different people and lent one onward. If a lend can
+only ever move the lender's own stock, there is nothing to disambiguate.
+`allocate_lend()` and its own-stock-first rule remain correct but are no longer load
+bearing on this path; they still apply if a lender holds several of their own copies in
+different conditions. Relaxing this decision later means building the
+request-and-acknowledge flow first, and §1.3 becomes live again the moment it is relaxed.
 
 ### 1.4 Everything is self-reported, so trust is the real design problem
 
@@ -575,12 +605,8 @@ genuinely pleasant, there is no data and the rest never matters.
 
 ## 5. Still open
 
-1. **Re-lending etiquette.** May Bob lend Ruben's card to Carla without asking? Not yet
-   answered. The schema supports both and the own-stock-first default in §1.3 makes the
-   question less urgent, because Bob spends his own stock first and stays accountable
-   either way. Currently unset; it needs a value before P2 ships.
-2. **The `tracked` default rule** in §4, which decides how much of Cardmarket lands in P3.
-3. **Rejection.** `member_state` has `pending`, `approved` and `suspended`, but no
+1. **The `tracked` default rule** in §4, which decides how much of Cardmarket lands in P3.
+2. **Rejection.** `member_state` has `pending`, `approved` and `suspended`, but no
    `rejected`. A rejected registration currently just stays pending forever, which is
    quiet but leaves no record and lets someone re-request indefinitely. Adding a fourth
    state is trivial; whether you want the friction is a group question.

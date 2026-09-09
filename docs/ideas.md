@@ -1,0 +1,5 @@
+- add option to copy a decklist, and see which cards you are missing.
+- link to riftbound.gg, riftdecks.gg to check which one of the decks you can make
+- show prices of the decks you own
+- save your own decks, which can be shared with others
+- 
