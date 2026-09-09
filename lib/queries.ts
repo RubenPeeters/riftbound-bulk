@@ -341,10 +341,13 @@ export async function holdersOf(
   });
 }
 
+export type WishlistMode = "none" | "shared" | "dedicated";
+
 export interface DeckSummary {
   id: string;
   name: string;
   notes: string | null;
+  wishlistMode: WishlistMode;
   ownerName: string;
   isMine: boolean;
   cards: number;
@@ -371,7 +374,7 @@ export async function listDecks(discordId: string | null): Promise<DeckSummary[]
               where h.owner_id = me() and h.holder_id = me()
               group by p.card_id
        )
-       select d.id, d.name, d.notes,
+       select d.id, d.name, d.notes, d.wishlist_mode as "wishlistMode",
               pe.display_name as "ownerName",
               (d.owner_id = me()) as "isMine",
               coalesce(sum(s.main + s.sideboard), 0)::int as cards,
@@ -383,7 +386,8 @@ export async function listDecks(discordId: string | null): Promise<DeckSummary[]
          join person pe on pe.id = d.owner_id
          left join deck_slot s on s.deck_id = d.id
          left join mine m on m.card_id = s.card_id
-        group by d.id, d.name, d.notes, pe.display_name, d.owner_id, d.updated_at
+        group by d.id, d.name, d.notes, d.wishlist_mode, pe.display_name, d.owner_id,
+                 d.updated_at
         order by (d.owner_id = me()) desc, d.updated_at desc`,
     );
     return rows;
@@ -406,7 +410,8 @@ export async function deckCards(
 ): Promise<{ deck: DeckSummary | null; cards: DeckCardRow[] }> {
   return asUser(discordId, async (db) => {
     const head = await db.query<DeckSummary>(
-      `select d.id, d.name, d.notes, pe.display_name as "ownerName",
+      `select d.id, d.name, d.notes, d.wishlist_mode as "wishlistMode",
+              pe.display_name as "ownerName",
               (d.owner_id = me()) as "isMine",
               0 as cards, 0 as distinct, 0 as missing, d.updated_at as "updatedAt"
          from deck d join person pe on pe.id = d.owner_id
@@ -673,6 +678,17 @@ export async function personHoldings(
   });
 }
 
+export async function deckWishlistDefault(
+  discordId: string | null,
+): Promise<"none" | "shared" | "dedicated"> {
+  return asUser(discordId, async (db) => {
+    const { rows } = await db.query<{ v: "none" | "shared" | "dedicated" }>(
+      `select deck_wishlist_default as v from person where id = me()`,
+    );
+    return rows[0]?.v ?? "shared";
+  });
+}
+
 export interface MemberSummary {
   id: string;
   displayName: string;
@@ -708,6 +724,10 @@ export interface WishRow {
   owned: number;
   missing: number;
   note: string | null;
+  /** What they asked for by hand. */
+  manual: number;
+  /** What their decks imply. The target is the larger of the two. */
+  fromDecks: number;
   /** Who in the group is holding spares, so a want becomes something you can act on. */
   spares: { personId: string; displayName: string; quantity: number }[];
 }
@@ -725,6 +745,7 @@ export async function wishlistFor(
   return asUser(discordId, async (db) => {
     const { rows } = await db.query<Omit<WishRow, "spares">>(
       `select w.card_id as "cardId", c.name, w.desired, w.owned, w.missing, w.note,
+              w.manual, w.from_decks as "fromDecks",
               (select p.image_url from printing p
                 where p.card_id = w.card_id
                 order by p.expansion_code, p.collector_number, p.collector_code

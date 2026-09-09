@@ -39,7 +39,9 @@ export async function saveDeck(
 
   const id = await asUser(discordId, async (db) => {
     const { rows } = await db.query<{ id: string }>(
-      `insert into deck (owner_id, name, notes) values (me(), $1, $2) returning id`,
+      `insert into deck (owner_id, name, notes, wishlist_mode)
+       select me(), $1, $2, p.deck_wishlist_default from person p where p.id = me()
+       returning id`,
       [name.trim(), notes?.trim() || null],
     );
     const deckId = rows[0].id;
@@ -70,60 +72,44 @@ export async function deleteDeck(deckId: string): Promise<void> {
   redirect("/decks");
 }
 
-export type WishMode = "atleast" | "add";
+export type WishlistMode = "none" | "shared" | "dedicated";
 
 /**
- * Put a deck's missing cards on your wishlist.
+ * Say whether, and how, this deck feeds your wishlist.
  *
- * The two modes are the answer to a real question, not a preference: do cards move
- * between your decks or not?
+ * This replaces pushing a deck's needs onto the wishlist. Pushing left the wishlist stale
+ * when a deck changed, left demand behind when a deck was deleted, and the additive mode
+ * was not idempotent, so pressing it twice quietly asked for twice as much. A flag is
+ * read every time the wishlist is computed, so all three stop being possible.
  *
- *   atleast  You play one deck at a time and shuffle cards between them. Two decks each
- *            wanting three Void Gate means you need three, so the target becomes the
- *            larger of what you already wanted and what this deck wants. Idempotent:
- *            running it again changes nothing.
- *
- *   add      You want this deck to keep its own copies. The same two decks mean six, so
- *            this deck's requirement is added on top of your existing target. NOT
- *            idempotent, deliberately: running it twice really does mean you asked twice.
- *
- * Targets are set from what the deck *needs*, never from today's shortfall, so acquiring
- * a card shrinks the wishlist on its own instead of leaving a stale wish behind.
- *
- * Only cards you are currently short of are touched. A deck you can already build adds
- * nothing, which keeps the wish table a list of intentions rather than an inventory.
+ *   shared     cards move between your decks, so this deck's needs overlap with your
+ *              other shared decks and the largest wins
+ *   dedicated  this deck keeps its own copies, so its needs add on top
  */
-export async function wishFromDeck(deckId: string, mode: WishMode): Promise<number> {
+export async function setDeckWishlistMode(deckId: string, mode: WishlistMode): Promise<void> {
   const { discordId, me } = await currentViewer();
   if (me?.state !== "approved") throw new Error("not an approved member");
 
-  const desired =
-    mode === "add"
-      ? "coalesce(w.desired, 0) + (s.main + s.sideboard)"
-      : "greatest(coalesce(w.desired, 0), s.main + s.sideboard)";
-
-  const n = await asUser(discordId, async (db) => {
-    const { rowCount } = await db.query(
-      `insert into wish (person_id, card_id, desired)
-       select me(), s.card_id, ${desired}
-         from deck_slot s
-         left join (
-              select p.card_id, sum(h.quantity) as qty
-                from holding h join printing p on p.id = h.printing_id
-               where h.owner_id = me()
-               group by p.card_id
-         ) o on o.card_id = s.card_id
-         left join wish w on w.person_id = me() and w.card_id = s.card_id
-        where s.deck_id = $1
-          and (s.main + s.sideboard) > coalesce(o.qty, 0)
-       on conflict (person_id, card_id)
-       do update set desired = excluded.desired, updated_at = now()`,
-      [deckId],
-    );
-    return rowCount ?? 0;
+  await asUser(discordId, async (db) => {
+    // The policy restricts updates to the deck's owner, so this changes nothing for
+    // anyone else without needing a check here.
+    await db.query(`update deck set wishlist_mode = $2, updated_at = now() where id = $1`, [
+      deckId,
+      mode,
+    ]);
   });
 
   revalidatePath("/wishlist");
   revalidatePath(`/decks/${deckId}`);
-  return n;
+  revalidatePath("/decks");
+}
+
+/** Remember what new decks should default to, so the question is answered once. */
+export async function setDeckWishlistDefault(mode: WishlistMode): Promise<void> {
+  const { discordId, me } = await currentViewer();
+  if (me?.state !== "approved") throw new Error("not an approved member");
+  await asUser(discordId, async (db) => {
+    await db.query(`update person set deck_wishlist_default = $1 where id = me()`, [mode]);
+  });
+  revalidatePath("/wishlist");
 }

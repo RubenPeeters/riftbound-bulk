@@ -229,21 +229,38 @@ would understate what is missing, which is the one error this feature must not m
 A wishlist target looks like a simple number until two decks want the same card. If you
 play one deck at a time and shuffle cards between them, two decks each wanting three Void
 Gate means you want **three**. If each deck keeps its own copies, it means **six**. Nothing
-in the data can settle which, because it is a fact about how the person plays.
+in the data can settle which, because it is a fact about how someone plays.
 
-So adding a deck's missing cards to a wishlist offers both, side by side rather than
-behind a default, since choosing wrongly is silent: the mistake surfaces later as a
-wishlist asking for six of something you meant to own three of.
+The first attempt asked at the moment of adding, as two buttons on the deck page. That was
+the wrong place, for a reason worth recording: the question is a property of the **deck**,
+not of the person and not of the card. Per card is the wrong axis entirely, since what
+varies per card is how many you want at all, which a manual target already expresses. Per
+person is real but too coarse: almost everyone has one deck they keep sleeved and others
+they take apart for spares.
 
-- *Enough to build this deck* takes the larger of the existing target and the deck's
-  requirement, and is idempotent.
-- *On top of what I already want* adds the requirement to the existing target, and is
-  deliberately not: pressing it twice really does mean asking twice.
+So the answer lives on the deck, as `wishlist_mode`:
 
-Targets are set from what a deck **needs**, never from today's shortfall. The wishlist
-subtracts what you own, so acquiring a card shrinks the list on its own rather than
-leaving a stale wish behind, and the same target keeps meaning the same thing a month
-later.
+| | |
+|---|---|
+| `none` | The deck is a note. It asks for nothing. |
+| `shared` | Cards move between decks, so this deck's needs overlap with other shared decks: take the largest. |
+| `dedicated` | The deck stays built, so its needs add on top. |
+
+and the wishlist is derived rather than pushed:
+
+```
+target(card) = max(manual target,
+                   sum(dedicated decks) + max(shared decks))
+```
+
+Deriving fixes three things pushing could not. Editing a deck updates the wishlist by
+itself; deleting a deck removes its demand instead of leaving it behind; and the additive
+mode was not idempotent, so pressing it twice quietly asked for twice as much. There is
+now nothing to press twice.
+
+Manual targets survive and win when higher, which is what keeps "I want exactly one signed
+Kai'Sa" sayable: no deck can talk you into more. Per person survives too, but only as the
+default a new deck starts with, so the question is answered once rather than per deck.
 
 ### 1.4 Everything is self-reported, so trust is the real design problem
 

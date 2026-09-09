@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { currentViewer } from "@/lib/session";
-import { wishlistFor, memberList } from "@/lib/queries";
+import { wishlistFor, memberList, deckWishlistDefault } from "@/lib/queries";
+import DefaultMode from "./default-mode";
 import { cardImage, THUMB } from "@/lib/images";
 
 export const dynamic = "force-dynamic";
@@ -29,9 +30,10 @@ export default async function Wishlist({
   const sp = await searchParams;
   const who = typeof sp.who === "string" && sp.who ? sp.who : me.id;
 
-  const [rows, members] = await Promise.all([
+  const [rows, members, defaultMode] = await Promise.all([
     wishlistFor(discordId, who),
     memberList(discordId),
+    deckWishlistDefault(discordId),
   ]);
   const subject = members.find((m) => m.id === who);
   const isMe = who === me.id;
@@ -43,12 +45,13 @@ export default async function Wishlist({
         {isMe ? "My wishlist" : `${subject?.displayName ?? "Someone"}'s wishlist`}
       </h1>
       <p className="mt-2 text-sm text-neutral-400">
-        Set a target on a card in{" "}
+        Two things land here: targets you set by hand in{" "}
         <Link href="/cards?edit=1&mode=want" className="underline">
           edit mode
-        </Link>{" "}
-        and anything you are short of turns up here. Only cards you have asked about: there
-        is no rule saying you want a playset of everything, because you do not.
+        </Link>
+        , and whatever your decks need, for each deck you have told to feed this list. The
+        larger of the two wins, so a deck can never talk you into more copies than you said
+        you wanted.
       </p>
 
       <div className="mt-5 flex flex-wrap gap-1.5">
@@ -66,6 +69,8 @@ export default async function Wishlist({
           </Link>
         ))}
       </div>
+
+      {isMe && <DefaultMode current={defaultMode} />}
 
       {rows.length === 0 ? (
         <p className="mt-10 text-neutral-500">
@@ -97,6 +102,12 @@ export default async function Wishlist({
                   <p className="truncate text-sm font-medium">{r.name}</p>
                   <p className="text-xs text-neutral-500">
                     wants {r.desired}, has {r.owned}
+                    {r.fromDecks > 0 && r.fromDecks >= r.manual && (
+                      <span className="ml-1.5 text-neutral-600">· from decks</span>
+                    )}
+                    {r.manual > 0 && r.manual > r.fromDecks && (
+                      <span className="ml-1.5 text-neutral-600">· set by hand</span>
+                    )}
                   </p>
                   {r.spares.length > 0 && (
                     <p className="mt-0.5 truncate text-[11px]">
