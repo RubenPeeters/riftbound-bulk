@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { currentViewer } from "@/lib/session";
 import { deckCards } from "@/lib/queries";
 import { deleteDeck } from "../actions";
+import WishFromDeck from "../wish-from-deck";
 
 export const dynamic = "force-dynamic";
 
@@ -89,6 +90,8 @@ export default async function Deck({ params }: { params: Promise<{ id: string }>
           })}
         </tbody>
       </table>
+
+      <WishFromDeck deckId={id} missing={missing} />
 
       {deck.isMine && (
         <form

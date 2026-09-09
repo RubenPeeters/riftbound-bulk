@@ -224,6 +224,27 @@ real card name, across all 1189 printings. And exactly one champion tag is ambig
 resolves to more than one card is dropped, so it stays unmatched and is reported. Guessing
 would understate what is missing, which is the one error this feature must not make.
 
+### 1.3f A wanted quantity means nothing until you say whether decks share cards
+
+A wishlist target looks like a simple number until two decks want the same card. If you
+play one deck at a time and shuffle cards between them, two decks each wanting three Void
+Gate means you want **three**. If each deck keeps its own copies, it means **six**. Nothing
+in the data can settle which, because it is a fact about how the person plays.
+
+So adding a deck's missing cards to a wishlist offers both, side by side rather than
+behind a default, since choosing wrongly is silent: the mistake surfaces later as a
+wishlist asking for six of something you meant to own three of.
+
+- *Enough to build this deck* takes the larger of the existing target and the deck's
+  requirement, and is idempotent.
+- *On top of what I already want* adds the requirement to the existing target, and is
+  deliberately not: pressing it twice really does mean asking twice.
+
+Targets are set from what a deck **needs**, never from today's shortfall. The wishlist
+subtracts what you own, so acquiring a card shrinks the list on its own rather than
+leaving a stale wish behind, and the same target keeps meaning the same thing a month
+later.
+
 ### 1.4 Everything is self-reported, so trust is the real design problem
 
 Nobody can verify a claim. Ruben says he lent it; Bob says he gave it back. This is not a
