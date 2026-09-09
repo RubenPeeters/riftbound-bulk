@@ -233,12 +233,25 @@ export async function deckDiff(
     // `having` clause drops any that would be ambiguous: Master Yi names two different
     // legends, so a bare "Master Yi" stays unmatched and is reported rather than guessed.
     const { rows } = await db.query<{ lname: string; cardId: string; owned: string }>(
-      `with candidate as (
-             select c.id as card_id, lower(c.name) as key from card c
+      `with name_variant as (
+             -- Four legends carry a printing suffix in their name, as
+             -- "Wuju Bladesman - Starter", which no decklist writes. Two extra spellings
+             -- cover it: the suffix dropped, and the dash turned into a comma, which is
+             -- what the client-side normaliser does to an input line anyway.
+             select c.id as card_id, c.type, c.tags, v.name
+               from card c
+               cross join lateral (values
+                     (c.name),
+                     (replace(c.name, ' - ', ', ')),
+                     (regexp_replace(c.name, '\s+-\s+.*$', ''))
+               ) as v(name)
+       ),
+       candidate as (
+             select card_id, lower(name) as key from name_variant
              union all
-             select c.id, lower(t || ', ' || c.name)
-               from card c, unnest(c.tags) t
-              where c.type = 'legend'
+             select nv.card_id, lower(t || ', ' || nv.name)
+               from name_variant nv, unnest(nv.tags) t
+              where nv.type = 'legend'
              union all
              select c.id, lower(t)
                from card c, unnest(c.tags) t

@@ -114,6 +114,11 @@ const CASES: Case[] = [
     ],
   },
   {
+    name: "a card name containing a spaced dash still parses (resolution handles the rest)",
+    input: "1 Wuju Bladesman - Starter",
+    entries: [["Wuju Bladesman, Starter", 1]],
+  },
+  {
     name: "curly apostrophe folded to straight",
     input: "1 Kai\u2019Sa, Daughter of the Void",
     entries: [["Kai'Sa, Daughter of the Void", 1]],

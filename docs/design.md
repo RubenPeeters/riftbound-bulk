@@ -218,11 +218,17 @@ So a decklist saying "Lee Sin, Blind Monk", or just "Lee Sin", matches no card b
 and the cards are present the whole time. Resolution therefore accepts three spellings for
 a legend: the card name, `Tag, Name`, and the bare tag.
 
-Two checks made this safe rather than hopeful. No synthesised `Tag, Name` collides with a
-real card name, across all 1189 printings. And exactly one champion tag is ambiguous:
-`Master Yi` names two different legends. Rather than special-case it, any spelling that
-resolves to more than one card is dropped, so it stays unmatched and is reported. Guessing
-would understate what is missing, which is the one error this feature must not make.
+Four legends also carry a printing suffix in the name itself, as `Wuju Bladesman -
+Starter`, which no decklist writes: lists say `Master Yi, Wuju Bladesman`. Two further
+spellings cover that, the suffix dropped and the dash turned into a comma, the latter
+because the input normaliser rewrites a spaced dash that way and would otherwise defeat
+even someone typing the name exactly.
+
+Two checks keep this safe rather than hopeful. Across all the spellings generated, only
+one key is ambiguous: `Master Yi` names two different legends, `Wuju Master` and `Wuju
+Bladesman - Starter`. Rather than special-case it, any spelling resolving to more than one
+card is dropped, so it stays unmatched and is reported. Guessing would understate what is
+missing, which is the one error this feature must not make.
 
 ### 1.3f A wanted quantity means nothing until you say whether decks share cards
 
