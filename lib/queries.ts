@@ -319,3 +319,105 @@ export async function holdersOf(
     return map;
   });
 }
+
+export interface DeckSummary {
+  id: string;
+  name: string;
+  notes: string | null;
+  ownerName: string;
+  isMine: boolean;
+  cards: number;
+  distinct: number;
+  /** Cards short of building it, against the viewer's own collection. */
+  missing: number;
+  updatedAt: string;
+}
+
+/**
+ * Every deck in the group, with how far the viewer is from building each.
+ *
+ * "missing" is computed against the viewer, not the deck's owner, so someone else's deck
+ * tells you what you would need to copy it. Cards lent out do not count as available,
+ * on the same reasoning as the decklist check: a deck you cannot physically assemble is
+ * one you are short for.
+ */
+export async function listDecks(discordId: string | null): Promise<DeckSummary[]> {
+  return asUser(discordId, async (db) => {
+    const { rows } = await db.query<DeckSummary>(
+      `with mine as (
+             select p.card_id, sum(h.quantity) as qty
+               from holding h join printing p on p.id = h.printing_id
+              where h.owner_id = me() and h.holder_id = me()
+              group by p.card_id
+       )
+       select d.id, d.name, d.notes,
+              pe.display_name as "ownerName",
+              (d.owner_id = me()) as "isMine",
+              coalesce(sum(s.main + s.sideboard), 0)::int as cards,
+              count(s.card_id)::int                       as distinct,
+              coalesce(sum(greatest(0,
+                  s.main + s.sideboard - coalesce(m.qty, 0))), 0)::int as missing,
+              d.updated_at as "updatedAt"
+         from deck d
+         join person pe on pe.id = d.owner_id
+         left join deck_slot s on s.deck_id = d.id
+         left join mine m on m.card_id = s.card_id
+        group by d.id, d.name, d.notes, pe.display_name, d.owner_id, d.updated_at
+        order by (d.owner_id = me()) desc, d.updated_at desc`,
+    );
+    return rows;
+  });
+}
+
+export interface DeckCardRow {
+  cardId: string;
+  name: string;
+  type: string | null;
+  main: number;
+  sideboard: number;
+  owned: number;
+  imageUrl: string | null;
+}
+
+export async function deckCards(
+  discordId: string | null,
+  deckId: string,
+): Promise<{ deck: DeckSummary | null; cards: DeckCardRow[] }> {
+  return asUser(discordId, async (db) => {
+    const head = await db.query<DeckSummary>(
+      `select d.id, d.name, d.notes, pe.display_name as "ownerName",
+              (d.owner_id = me()) as "isMine",
+              0 as cards, 0 as distinct, 0 as missing, d.updated_at as "updatedAt"
+         from deck d join person pe on pe.id = d.owner_id
+        where d.id = $1`,
+      [deckId],
+    );
+    if (head.rowCount === 0) return { deck: null, cards: [] };
+
+    const { rows } = await db.query<DeckCardRow>(
+      `with mine as (
+             select p.card_id, sum(h.quantity) as qty
+               from holding h join printing p on p.id = h.printing_id
+              where h.owner_id = me() and h.holder_id = me()
+              group by p.card_id
+       ),
+       art as (
+             select distinct on (card_id) card_id, image_url
+               from printing
+              order by card_id, expansion_code, collector_number, collector_code
+       )
+       select s.card_id as "cardId", c.name, c.type,
+              s.main, s.sideboard,
+              coalesce(m.qty, 0)::int as owned,
+              art.image_url as "imageUrl"
+         from deck_slot s
+         join card c on c.id = s.card_id
+         left join mine m on m.card_id = s.card_id
+         left join art on art.card_id = s.card_id
+        where s.deck_id = $1
+        order by c.type nulls last, c.name`,
+      [deckId],
+    );
+    return { deck: head.rows[0], cards: rows };
+  });
+}
