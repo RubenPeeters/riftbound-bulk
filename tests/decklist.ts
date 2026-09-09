@@ -1,0 +1,72 @@
+/**
+ * Checks for the decklist parser. Pure input to output, so this runs anywhere:
+ *   make check-decklist
+ */
+import { parseDecklist } from "../lib/decklist";
+
+interface Case {
+  name: string;
+  input: string;
+  entries: [string, number][];
+  ignored?: number;
+}
+
+const CASES: Case[] = [
+  { name: "leading count", input: "3 Void Gate", entries: [["Void Gate", 3]] },
+  { name: "leading count with x", input: "3x Void Gate", entries: [["Void Gate", 3]] },
+  { name: "leading count, spaced x", input: "2 x Void Gate", entries: [["Void Gate", 2]] },
+  { name: "trailing count", input: "Void Gate x4", entries: [["Void Gate", 4]] },
+  { name: "bare name is one copy", input: "Void Gate", entries: [["Void Gate", 1]] },
+  {
+    name: "comments and section headers ignored",
+    input: "# my deck\nMain Deck:\n---\n2 Void Gate\n// end",
+    entries: [["Void Gate", 2]],
+  },
+  {
+    name: "set annotations stripped",
+    input: "1 Void Gate (OGN)\n1 Akali, Deadly Weapon [VEN-021]\n1 Baron Nashor *F*",
+    entries: [
+      ["Void Gate", 1],
+      ["Akali, Deadly Weapon", 1],
+      ["Baron Nashor", 1],
+    ],
+  },
+  {
+    name: "trailing collector code stripped",
+    input: "2 Void Gate OGN-296/298",
+    entries: [["Void Gate", 2]],
+  },
+  {
+    name: "repeated card summed, not overwritten",
+    input: "2 Void Gate\n1 Void Gate",
+    entries: [["Void Gate", 3]],
+  },
+  {
+    name: "case-insensitive when summing, first spelling kept",
+    input: "1 Void Gate\n2 VOID GATE",
+    entries: [["Void Gate", 3]],
+  },
+  {
+    name: "commas in names survive",
+    input: "3 Akali, Deadly Weapon",
+    entries: [["Akali, Deadly Weapon", 3]],
+  },
+  { name: "blank input", input: "\n\n   \n", entries: [] },
+];
+
+let failures = 0;
+for (const c of CASES) {
+  const got = parseDecklist(c.input);
+  const actual = got.entries.map((e) => [e.name, e.quantity] as [string, number]);
+  const ok =
+    JSON.stringify(actual) === JSON.stringify(c.entries) &&
+    (c.ignored === undefined || got.ignored.length === c.ignored);
+  failures += ok ? 0 : 1;
+  console.log(`${ok ? "PASS" : "FAIL"}  ${c.name}`);
+  if (!ok) {
+    console.log(`      got      ${JSON.stringify(actual)}  ignored=${got.ignored.length}`);
+    console.log(`      expected ${JSON.stringify(c.entries)}`);
+  }
+}
+console.log(failures ? `\n${failures} FAILURE(S)` : "\nall pass");
+process.exit(failures ? 1 : 0);

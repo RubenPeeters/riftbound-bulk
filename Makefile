@@ -159,6 +159,11 @@ typecheck: node_modules
 test: node_modules
 	$(NODE) npx --yes vitest run
 
+## Check the decklist parser against its cases
+.PHONY: check-decklist
+check-decklist: node_modules
+	$(NODE) npx --yes tsx tests/decklist.ts
+
 ## Cross-check allocate_lend() against an independent recomputation
 .PHONY: allocation-oracle
 allocation-oracle:
@@ -166,7 +171,7 @@ allocation-oracle:
 
 ## Everything CI runs
 .PHONY: check
-check: lint typecheck test allocation-oracle
+check: lint typecheck test allocation-oracle check-decklist
 
 ## Remove build output and caches
 .PHONY: clean

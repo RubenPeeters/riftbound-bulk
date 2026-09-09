@@ -75,6 +75,12 @@ export default async function Home() {
                 My collection
               </Link>
               <Link
+                href="/decklist"
+                className="rounded border border-neutral-700 px-3 py-1.5 text-sm text-neutral-300 hover:bg-neutral-800"
+              >
+                Decklist check
+              </Link>
+              <Link
                 href="/cards"
                 className="rounded border border-neutral-700 px-3 py-1.5 text-sm text-neutral-300 hover:bg-neutral-800"
               >

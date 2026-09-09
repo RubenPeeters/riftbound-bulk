@@ -6,7 +6,7 @@ own and, above all, **who lent what to whom**.
 ## Status
 
 Working: schema, card loader, 1189 cards, Discord sign-in, the admin approval queue, the
-card browser and collection entry. The loan ledger UI is not built yet, though the ledger
+card browser, collection entry and the decklist check. The loan ledger UI is not built yet, though the ledger
 itself is what collection entry already writes to. Read
 [docs/design.md](docs/design.md) first: it covers what makes loan tracking hard, the
 class diagram, and the open questions. The schema in
@@ -129,6 +129,8 @@ app/page.tsx                 sign in, and where you are in the approval flow
 app/admin/                   approval queue: approve, reject, suspend
 app/cards/                   card browser, filtered and paged
 app/collection/              collection entry: local until saved, appends to the ledger
+app/decklist/                paste a list, see what is missing, or claim it as owned
+lib/decklist.ts              the parser (pure; tests/decklist.ts covers it)
 lib/queries.ts               every read the pages do
 lib/db.ts                    asPerson(): the transaction wrapper RLS depends on
 docs/design.md               the plan: difficulties, class diagram, roadmap

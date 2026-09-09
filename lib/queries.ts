@@ -180,3 +180,76 @@ export async function listForEntry(
     return rows;
   });
 }
+
+export interface DeckDiffRow {
+  name: string;
+  cardId: string | null;
+  wanted: number;
+  owned: number;
+  missing: number;
+}
+
+/**
+ * Compare a parsed decklist against what the caller owns and holds.
+ *
+ * Ownership is summed across every printing of a card and every finish, because a deck
+ * cares about the card, not which set it came from: three Void Gates are three Void
+ * Gates. Cards lent out are excluded, since a deck you cannot physically build is a deck
+ * you are missing cards for; that is the honest answer even though you own them.
+ *
+ * Unmatched names come back with cardId null rather than being dropped. Silently
+ * discarding a line would understate what is missing, which is the one error this must
+ * not make.
+ */
+export async function deckDiff(
+  discordId: string | null,
+  entries: { name: string; quantity: number }[],
+): Promise<DeckDiffRow[]> {
+  if (entries.length === 0) return [];
+  const names = entries.map((e) => e.name.toLowerCase());
+
+  const owned = await asUser(discordId, async (db) => {
+    const { rows } = await db.query<{ lname: string; cardId: string; owned: string }>(
+      `select lower(c.name) as lname, c.id as "cardId",
+              coalesce(sum(h.quantity), 0) as owned
+         from card c
+         left join printing p on p.card_id = c.id
+         left join holding h
+                on h.printing_id = p.id
+               and h.owner_id = me() and h.holder_id = me()
+        where lower(c.name) = any($1::text[])
+        group by c.id, c.name`,
+      [names],
+    );
+    return new Map(rows.map((r) => [r.lname, { cardId: r.cardId, owned: Number(r.owned) }]));
+  });
+
+  return entries.map((e) => {
+    const hit = owned.get(e.name.toLowerCase());
+    return {
+      name: e.name,
+      cardId: hit?.cardId ?? null,
+      wanted: e.quantity,
+      owned: hit?.owned ?? 0,
+      missing: Math.max(0, e.quantity - (hit?.owned ?? 0)),
+    };
+  });
+}
+
+/** The printing to credit when someone says "I own all of these": the earliest one. */
+export async function defaultPrintings(
+  discordId: string | null,
+  cardIds: string[],
+): Promise<Map<string, string>> {
+  if (cardIds.length === 0) return new Map();
+  return asUser(discordId, async (db) => {
+    const { rows } = await db.query<{ cardId: string; printingId: string }>(
+      `select distinct on (card_id) card_id as "cardId", id as "printingId"
+         from printing
+        where card_id = any($1::text[])
+        order by card_id, expansion_code, collector_number, collector_code`,
+      [cardIds],
+    );
+    return new Map(rows.map((r) => [r.cardId, r.printingId]));
+  });
+}
