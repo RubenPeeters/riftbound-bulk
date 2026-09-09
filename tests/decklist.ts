@@ -66,6 +66,22 @@ const CASES: Case[] = [
     entries: [["Nine-Tailed Fox", 1]],
   },
   {
+    name: "sideboard header skipped, and its copies added to the main deck",
+    input: "1 Charm\n2 Disarming Rake\nSideboard:\n1 Charm\n1 Disarming Rake",
+    entries: [
+      ["Charm", 2],
+      ["Disarming Rake", 3],
+    ],
+  },
+  {
+    name: "legend written as champion, epithet (from a real list)",
+    input: "1 Lillia, Bashful Bloom\n1 Lillia, Fae Fawn",
+    entries: [
+      ["Lillia, Bashful Bloom", 1],
+      ["Lillia, Fae Fawn", 1],
+    ],
+  },
+  {
     name: "curly apostrophe folded to straight",
     input: "1 Kai\u2019Sa, Daughter of the Void",
     entries: [["Kai'Sa, Daughter of the Void", 1]],
