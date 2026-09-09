@@ -29,8 +29,11 @@ select (select count(*) from card) as cards, (select count(*) from person) as pe
 set local app.discord_id = :'probe';
 
 \echo '=== pending member: sees nothing but itself ==='
-\echo 'expect 0 cards, 1 person'
-select (select count(*) from card) as cards, (select count(*) from person) as people;
+\echo 'expect 0 cards, 1 person, and 0 holdings'
+select (select count(*) from card) as cards,
+       (select count(*) from person) as people,
+       (select count(*) from holding) as holdings;
+\echo 'holdings must be 0: the views were bypassing RLS until 0006 set security_invoker.'
 
 reset role;
 update person set state = 'approved', approved_at = now() where discord_id = :'probe';
