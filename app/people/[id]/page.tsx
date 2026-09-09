@@ -1,7 +1,13 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { currentViewer } from "@/lib/session";
-import { memberProfile, personHoldings, filterOptions, PAGE_SIZE } from "@/lib/queries";
+import {
+  memberProfile,
+  personHoldings,
+  filterOptions,
+  wishlistFor,
+  PAGE_SIZE,
+} from "@/lib/queries";
 
 export const dynamic = "force-dynamic";
 
@@ -33,10 +39,11 @@ export default async function PersonPage({
   const gap = one("gap") === "1";
   const filters = { q: one("q"), set: one("set"), gap, page: Number(one("page") ?? 1) || 1 };
 
-  const [profile, { rows, total }, options] = await Promise.all([
+  const [profile, { rows, total }, options, wants] = await Promise.all([
     memberProfile(discordId, id),
     personHoldings(discordId, id, filters),
     filterOptions(discordId),
+    wishlistFor(discordId, id),
   ]);
   if (!profile) notFound();
 
@@ -83,6 +90,48 @@ export default async function PersonPage({
           </p>
         </div>
       </div>
+
+      {wants.length > 0 && (
+        <section className="mt-8 rounded-lg border border-neutral-800 p-4">
+          <div className="flex items-baseline justify-between gap-3">
+            <h2 className="text-sm font-medium text-neutral-300">
+              {isMe ? "You want" : "Wants"}
+            </h2>
+            <Link href={`/wishlist?who=${id}`} className="text-xs text-neutral-500 underline">
+              Full wishlist
+            </Link>
+          </div>
+          <ul className="mt-3 space-y-1.5">
+            {wants.slice(0, 12).map((w) => {
+              // The spare list excludes the wisher, so anything of mine in it is something
+              // I could actually hand over. That is the only reason to show this here.
+              const mySpare = isMe ? null : w.spares.find((sp) => sp.personId === me.id);
+              return (
+                <li key={w.cardId} className="flex items-baseline gap-2 text-sm">
+                  <span className="min-w-0 flex-1 truncate">{w.name}</span>
+                  <span className="shrink-0 text-xs text-neutral-500">
+                    wants {w.desired}, has {w.owned}
+                  </span>
+                  {mySpare ? (
+                    <span className="shrink-0 rounded bg-emerald-500/15 px-2 py-0.5 text-xs font-medium text-emerald-300">
+                      you have {mySpare.quantity}
+                    </span>
+                  ) : (
+                    <span className="shrink-0 rounded bg-amber-500/15 px-2 py-0.5 text-xs text-amber-300">
+                      short {w.missing}
+                    </span>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+          {wants.length > 12 && (
+            <p className="mt-2 text-xs text-neutral-600">
+              and {wants.length - 12} more
+            </p>
+          )}
+        </section>
+      )}
 
       <form className="mt-8 flex flex-wrap items-end gap-3">
         {gap && <input type="hidden" name="gap" value="1" />}
