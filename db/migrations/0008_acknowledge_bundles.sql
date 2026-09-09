@@ -9,8 +9,11 @@
 -- primary key becomes two partial unique indexes, since neither column is always present.
 
 alter table acknowledgement add column transaction_id uuid references loan_transaction (id);
-alter table acknowledgement alter column event_id drop not null;
+
+-- The primary key goes first: a column cannot be made nullable while it is still part of
+-- one, and event_id has to become nullable for a transaction-scoped acknowledgement.
 alter table acknowledgement drop constraint acknowledgement_pkey;
+alter table acknowledgement alter column event_id drop not null;
 
 alter table acknowledgement add constraint ack_subject check (
     (event_id is not null and transaction_id is null)
