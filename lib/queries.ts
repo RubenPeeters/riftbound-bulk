@@ -54,6 +54,8 @@ export interface CardRow {
   energy: number | null;
   might: number | null;
   imageUrl: string | null;
+  /** How many of this printing the caller owns and holds, in the selected finish. */
+  quantity: number;
 }
 
 export interface CardFilters {
@@ -62,45 +64,70 @@ export interface CardFilters {
   rarity?: string;
   type?: string;
   q?: string;
+  /** "owned" and "missing" filter against the caller's own shelf. */
+  show?: "all" | "owned" | "missing";
+  finish?: string;
   page?: number;
 }
 
 export const PAGE_SIZE = 60;
 
 /**
- * One page of printings. Returns nothing at all for a caller who is not an approved
- * member: the policies deny, so there is no separate permission check here.
+ * One page of printings, with how many the caller owns and holds.
+ *
+ * Browsing and collection entry are the same query: the only difference is whether the
+ * page draws steppers. Splitting them produced two filter bars that drifted apart for no
+ * reason, and left entry without the name search it needs most.
+ *
+ * Returns nothing at all to a caller who is not an approved member: the policies deny, so
+ * there is no separate permission check. `quantity` is 0 for a signed-out caller because
+ * `me()` is null, which is also correct.
  */
 export async function listPrintings(
   discordId: string | null,
   f: CardFilters,
 ): Promise<{ rows: CardRow[]; total: number }> {
   const page = Math.max(1, f.page ?? 1);
+  const finish = f.finish ?? "normal";
+  const show = f.show ?? "all";
+
   return asUser(discordId, async (db) => {
-    const where = `
+    const base = `
+      from printing p
+      join card c on c.id = p.card_id
+      left join (
+           select printing_id, sum(quantity) as qty
+             from holding
+            where owner_id = me() and holder_id = me() and finish = $6
+            group by printing_id
+      ) h on h.printing_id = p.id
       where ($1::text is null or p.expansion_code = $1)
         and ($2::text is null or $2 = any(c.domains))
         and ($3::text is null or p.rarity = $3)
         and ($4::text is null or c.type = $4)
-        and ($5::text is null or c.name ilike '%' || $5 || '%')`;
-    const params = [f.set ?? null, f.domain ?? null, f.rarity ?? null, f.type ?? null, f.q ?? null];
+        and ($5::text is null or c.name ilike '%' || $5 || '%')
+        and ($7::text = 'all'
+             or ($7 = 'owned'   and coalesce(h.qty, 0) > 0)
+             or ($7 = 'missing' and coalesce(h.qty, 0) = 0))`;
 
-    const counted = await db.query<{ total: string }>(
-      `select count(*) as total from printing p join card c on c.id = p.card_id ${where}`,
-      params,
-    );
+    const params = [
+      f.set ?? null, f.domain ?? null, f.rarity ?? null, f.type ?? null, f.q ?? null,
+      finish, show,
+    ];
+
+    const counted = await db.query<{ total: string }>(`select count(*) as total ${base}`, params);
 
     const { rows } = await db.query<CardRow>(
-      `select p.id            as "printingId",
-              p.printed_code  as "printedCode",
+      `select p.id             as "printingId",
+              p.printed_code   as "printedCode",
               p.expansion_code as "set",
               c.name, c.type,
-              c.super_types   as "superTypes",
+              c.super_types    as "superTypes",
               c.domains,
               p.rarity, c.energy, c.might,
-              p.image_url     as "imageUrl"
-         from printing p join card c on c.id = p.card_id
-         ${where}
+              p.image_url      as "imageUrl",
+              coalesce(h.qty, 0)::int as quantity
+       ${base}
         order by p.expansion_code, p.collector_number, p.collector_code
         limit ${PAGE_SIZE} offset ${(page - 1) * PAGE_SIZE}`,
       params,
@@ -133,51 +160,6 @@ export async function filterOptions(discordId: string | null) {
       rarities: rarities.rows.map((r) => r.v),
       types: types.rows.map((r) => r.v),
     };
-  });
-}
-
-export interface EntryRow {
-  printingId: string;
-  printedCode: string;
-  name: string;
-  rarity: string | null;
-  imageUrl: string | null;
-  quantity: number;
-}
-
-/**
- * One set, with how many of each printing the caller owns and holds themselves.
- *
- * Holdings are keyed by owner AND holder, so this deliberately counts only rows where
- * both are the caller: cards lent out are still owned, but entering a collection is
- * about what is in front of you. Conditions are summed, since entry does not ask.
- */
-export async function listForEntry(
-  discordId: string | null,
-  set: string,
-  finish: string,
-): Promise<EntryRow[]> {
-  return asUser(discordId, async (db) => {
-    const { rows } = await db.query<EntryRow>(
-      `select p.id                        as "printingId",
-              p.printed_code              as "printedCode",
-              c.name,
-              p.rarity,
-              p.image_url                 as "imageUrl",
-              coalesce(h.qty, 0)::int     as quantity
-         from printing p
-         join card c on c.id = p.card_id
-         left join (
-              select printing_id, sum(quantity) as qty
-                from holding
-               where owner_id = me() and holder_id = me() and finish = $2
-               group by printing_id
-         ) h on h.printing_id = p.id
-        where p.expansion_code = $1
-        order by p.collector_number, p.collector_code`,
-      [set, finish],
-    );
-    return rows;
   });
 }
 

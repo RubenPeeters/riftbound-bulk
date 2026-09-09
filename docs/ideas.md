@@ -2,7 +2,7 @@
 - link to riftbound.gg, riftdecks.gg to check which one of the decks you can make
 - show prices of the decks you own
 - save your own decks, which can be shared with others
-- 
+- look at someone elses collection, on their profile
 ---
 
 ## Notes on the above (Claude, 2026-09-09)

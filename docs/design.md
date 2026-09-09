@@ -243,6 +243,10 @@ evening, the data is stale within a month and the app is dead. This deserves mor
 effort than the schema does:
 
 - A set grid with `+`/`-` steppers, keyboard-driven, all state local until saved.
+- The **same** grid and the same filters as browsing. Two screens over one dataset produce
+  two filter bars that drift apart, and the one that drifts is always entry, which is the
+  screen that needs name search most: you look up the card in your hand, you do not browse
+  to it. `/cards?edit=1` is the whole difference.
 - Paste a deck list as text, resolve names to printings, import in one action.
 - Optimistic writes with an offline queue, because entry happens on a phone, on the
   floor, next to a binder, on someone else's wifi.
