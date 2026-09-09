@@ -70,6 +70,7 @@ export default async function Cards({
   const one = (k: string) => (typeof sp[k] === "string" && sp[k] ? (sp[k] as string) : undefined);
 
   const edit = one("edit") === "1";
+  const mode = one("mode") === "want" ? "want" : "have";
   const finish = FINISHES.includes(one("finish") ?? "") ? one("finish")! : "normal";
   const show =
     (["all", "owned", "missing", "anyone", "nobody"] as const).find((v) => v === one("show")) ??
@@ -102,7 +103,12 @@ export default async function Cards({
 
   const href = (over: Record<string, string | number | undefined>) => {
     const qs = new URLSearchParams();
-    const merged = { ...filters, edit: edit ? "1" : undefined, ...over };
+    const merged = {
+      ...filters,
+      edit: edit ? "1" : undefined,
+      mode: mode === "want" ? "want" : undefined,
+      ...over,
+    };
     for (const [k, v] of Object.entries(merged)) {
       if (v !== undefined && v !== "" && !(k === "show" && v === "all") && !(k === "page" && v === 1))
         qs.set(k, String(v));
@@ -195,10 +201,35 @@ export default async function Cards({
           {edit ? "Editing my collection" : "Edit my collection"}
         </Link>
         {edit && (
-          <span className="text-xs text-neutral-500">
-            Counting {finish} copies you own and hold. Changes are kept while you filter and
-            page, and saved when you press Save.
-          </span>
+          <>
+            <span className="flex items-center gap-1.5">
+              <span className="text-xs text-neutral-500">Steppers set</span>
+              {(
+                [
+                  ["have", "how many I have"],
+                  ["want", "how many I want"],
+                ] as const
+              ).map(([v, label]) => (
+                <Link
+                  key={v}
+                  href={href({ mode: v === "have" ? undefined : v })}
+                  className={`rounded px-2.5 py-1 text-xs ${
+                    mode === v
+                      ? "bg-neutral-100 font-medium text-neutral-900"
+                      : "border border-neutral-800 text-neutral-400 hover:bg-neutral-900"
+                  }`}
+                >
+                  {label}
+                </Link>
+              ))}
+            </span>
+            <span className="text-xs text-neutral-500">
+              {mode === "want"
+                ? "Set a target only on cards you actually want more of. Anything you are short of appears on your wishlist."
+                : `Counting ${finish} copies you own and hold.`}{" "}
+              Changes are kept while you filter and page, and saved when you press Save.
+            </span>
+          </>
         )}
       </div>
 

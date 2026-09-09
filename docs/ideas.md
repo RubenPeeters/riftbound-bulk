@@ -3,6 +3,7 @@
 - show prices of the decks you own
 - save your own decks, which can be shared with others  [done: /decks]
 - look at someone elses collection, on their profile  [done: /people]
+- per-card wanted quantity feeding a wishlist  [done: /wishlist, requested by a member]
 ---
 
 ## Notes on the above (Claude, 2026-09-09)

@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
-import { saveQuantities } from "./actions";
+import { saveQuantities, saveDesired } from "./actions";
 import type { CardRow, Holder } from "@/lib/queries";
 
 const DOMAIN_COLOR: Record<string, string> = {
@@ -37,12 +37,15 @@ export default function Grid({
   editable,
   finish,
   holders = {},
+  mode = "have",
 }: {
   rows: CardRow[];
   editable: boolean;
   finish: string;
   /** Who in the group has each printing, so a card you lack says who to ask. */
   holders?: Record<string, Holder[]>;
+  /** Whether the steppers set how many you have or how many you want. */
+  mode?: "have" | "want";
 }) {
   const [pending, setPending] = useState<Record<string, number>>({});
   const [busy, start] = useTransition();
@@ -51,18 +54,20 @@ export default function Grid({
 
   // Read on mount rather than during render: the server has no sessionStorage, and
   // seeding state from it directly would mismatch the server-rendered markup.
-  useEffect(() => setPending(loadPending(finish)), [finish]);
+  useEffect(() => setPending(loadPending(`${mode}:${finish}`)), [finish, mode]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
     try {
-      sessionStorage.setItem(`pending:${finish}`, JSON.stringify(pending));
+      sessionStorage.setItem(`pending:${mode}:${finish}`, JSON.stringify(pending));
     } catch {
       /* private mode; edits then last only as long as the page does */
     }
-  }, [pending, finish]);
+  }, [pending, finish, mode]);
 
-  const quantityOf = (r: CardRow) => pending[r.printingId] ?? r.quantity;
+  // In want mode the stepper edits the target, not the shelf.
+  const serverValue = (r: CardRow) => (mode === "want" ? r.desired : r.quantity);
+  const quantityOf = (r: CardRow) => pending[r.printingId] ?? serverValue(r);
   const dirtyCount = Object.keys(pending).length;
 
   const set = (r: CardRow, n: number) => {
@@ -70,7 +75,7 @@ export default function Grid({
     setPending((p) => {
       const next = { ...p };
       // Back to what the server holds is not a change; drop it so the count stays honest.
-      if (q === r.quantity) delete next[r.printingId];
+      if (q === serverValue(r)) delete next[r.printingId];
       else next[r.printingId] = q;
       return next;
     });
@@ -85,7 +90,8 @@ export default function Grid({
     }));
     start(async () => {
       try {
-        const n = await saveQuantities(finish, targets);
+        const n =
+          mode === "want" ? await saveDesired(targets) : await saveQuantities(finish, targets);
         setPending({});
         setNote(`Saved ${n} change${n === 1 ? "" : "s"}.`);
         setTimeout(() => setNote(null), 4000);
@@ -165,6 +171,14 @@ export default function Grid({
                 {r.name}
               </p>
               <p className="font-mono text-[10px] text-neutral-600">{r.printedCode}</p>
+              {editable && mode === "want" && (
+                <p className="text-[10px] text-neutral-500">
+                  you have {r.quantity}
+                  {n > r.quantity && (
+                    <span className="text-amber-300"> · short {n - r.quantity}</span>
+                  )}
+                </p>
+              )}
               {n === 0 && (holders[r.printingId]?.length ?? 0) > 0 && (
                 <p className="mt-1 truncate text-[10px]" title="Could lend you this">
                   {holders[r.printingId].map((h, i) => (

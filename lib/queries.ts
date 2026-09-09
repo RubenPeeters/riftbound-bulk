@@ -58,6 +58,8 @@ export interface CardRow {
   quantity: number;
   /** How many are available across the group: owned and held by the same person. */
   groupQuantity: number;
+  /** How many the caller has said they want, or 0 if they have not said. */
+  desired: number;
 }
 
 export interface CardFilters {
@@ -101,6 +103,7 @@ export async function listPrintings(
     const base = `
       from printing p
       join card c on c.id = p.card_id
+      left join wish w on w.card_id = c.id and w.person_id = me()
       left join (
            select printing_id,
                   coalesce(sum(quantity) filter (
@@ -140,7 +143,8 @@ export async function listPrintings(
               p.rarity, c.energy, c.might,
               p.image_url      as "imageUrl",
               coalesce(h.mine, 0)::int   as quantity,
-              coalesce(h.anyone, 0)::int as "groupQuantity"
+              coalesce(h.anyone, 0)::int as "groupQuantity",
+              coalesce(w.desired, 0)::int as desired
        ${base}
         order by p.expansion_code, p.collector_number, p.collector_code
         limit ${PAGE_SIZE} offset ${(page - 1) * PAGE_SIZE}`,
@@ -678,5 +682,70 @@ export async function memberList(discordId: string | null): Promise<MemberSummar
         order by (p.id = me()) desc, p.display_name`,
     );
     return rows;
+  });
+}
+
+export interface WishRow {
+  cardId: string;
+  name: string;
+  imageUrl: string | null;
+  desired: number;
+  owned: number;
+  missing: number;
+  note: string | null;
+  /** Who in the group is holding spares, so a want becomes something you can act on. */
+  spares: { personId: string; displayName: string; quantity: number }[];
+}
+
+/**
+ * What someone still needs, and who could supply it.
+ *
+ * Only rows still short are returned: a target you have met is not a wish any more, and
+ * leaving it on the list makes the list something people stop reading.
+ */
+export async function wishlistFor(
+  discordId: string | null,
+  personId: string,
+): Promise<WishRow[]> {
+  return asUser(discordId, async (db) => {
+    const { rows } = await db.query<Omit<WishRow, "spares">>(
+      `select w.card_id as "cardId", c.name, w.desired, w.owned, w.missing, w.note,
+              (select p.image_url from printing p
+                where p.card_id = w.card_id
+                order by p.expansion_code, p.collector_number, p.collector_code
+                limit 1) as "imageUrl"
+         from wishlist w join card c on c.id = w.card_id
+        where w.person_id = $1 and w.missing > 0
+        order by w.missing desc, c.name`,
+      [personId],
+    );
+    if (rows.length === 0) return [];
+
+    // Spares are counted from people other than the wisher, and only cards in their own
+    // hands: something already lent out is not a spare anyone can offer.
+    const { rows: spare } = await db.query<{
+      cardId: string; personId: string; displayName: string; quantity: number;
+    }>(
+      `select p.card_id as "cardId", pe.id::text as "personId",
+              pe.display_name as "displayName", sum(h.quantity)::int as quantity
+         from holding h
+         join printing p on p.id = h.printing_id
+         join person pe on pe.id = h.owner_id
+        where p.card_id = any($1::text[])
+          and h.owner_id = h.holder_id
+          and h.owner_id <> $2
+        group by p.card_id, pe.id, pe.display_name
+        having sum(h.quantity) > 0
+        order by sum(h.quantity) desc`,
+      [rows.map((r) => r.cardId), personId],
+    );
+
+    const byCard = new Map<string, WishRow["spares"]>();
+    for (const s of spare) {
+      const list = byCard.get(s.cardId) ?? [];
+      list.push({ personId: s.personId, displayName: s.displayName, quantity: s.quantity });
+      byCard.set(s.cardId, list);
+    }
+    return rows.map((r) => ({ ...r, spares: byCard.get(r.cardId) ?? [] }));
   });
 }

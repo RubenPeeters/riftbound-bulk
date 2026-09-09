@@ -70,3 +70,59 @@ export async function saveQuantities(finish: string, targets: Target[]): Promise
   revalidatePath("/cards");
   return changed;
 }
+
+/**
+ * Set how many of a card you want.
+ *
+ * Targets are absolute, like collection quantities and for the same reason: the client
+ * holds pending edits across paging and no longer knows the old value. A target of 0
+ * removes the wish rather than storing a zero, so "I want none of this" and "I never
+ * said" stay the same thing.
+ *
+ * Wishes are keyed by card, so this takes printing ids only because that is what the
+ * grid has, and resolves them.
+ */
+export async function saveDesired(targets: Target[]): Promise<number> {
+  const { discordId, me } = await currentViewer();
+  if (me?.state !== "approved") throw new Error("not an approved member");
+
+  const wanted = targets.filter(
+    (t) => Number.isInteger(t.quantity) && t.quantity >= 0 && t.quantity <= 999,
+  );
+  if (wanted.length === 0) return 0;
+
+  const n = await asUser(discordId, async (db) => {
+    const { rows } = await db.query<{ printingId: string; cardId: string }>(
+      `select id as "printingId", card_id as "cardId"
+         from printing where id = any($1::text[])`,
+      [wanted.map((t) => t.printingId)],
+    );
+    const cardOf = new Map(rows.map((r) => [r.printingId, r.cardId]));
+
+    // Several printings of one card can be edited in a single pass; the last target wins
+    // rather than summing, since they are all statements about the same want.
+    const perCard = new Map<string, number>();
+    for (const t of wanted) {
+      const cardId = cardOf.get(t.printingId);
+      if (cardId) perCard.set(cardId, t.quantity);
+    }
+
+    for (const [cardId, desired] of perCard) {
+      if (desired === 0) {
+        await db.query(`delete from wish where person_id = me() and card_id = $1`, [cardId]);
+      } else {
+        await db.query(
+          `insert into wish (person_id, card_id, desired) values (me(), $1, $2)
+           on conflict (person_id, card_id) do update
+              set desired = excluded.desired, updated_at = now()`,
+          [cardId, desired],
+        );
+      }
+    }
+    return perCard.size;
+  });
+
+  revalidatePath("/cards");
+  revalidatePath("/wishlist");
+  return n;
+}
