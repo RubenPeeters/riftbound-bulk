@@ -191,16 +191,41 @@ export async function deckDiff(
   const names = entries.map((e) => e.name.toLowerCase());
 
   const owned = await asUser(discordId, async (db) => {
+    // A decklist names a card the way a person writes it, which is not always the way the
+    // feed spells it. Legends are the case that matters: their card name is the epithet
+    // alone ("Blind Monk"), while the champion lives in tags, so a list saying "Lee Sin,
+    // Blind Monk" or "Lee Sin" matches nothing on name.
+    //
+    // Every alternative spelling that resolves to exactly one card is accepted. The
+    // `having` clause drops any that would be ambiguous: Master Yi names two different
+    // legends, so a bare "Master Yi" stays unmatched and is reported rather than guessed.
     const { rows } = await db.query<{ lname: string; cardId: string; owned: string }>(
-      `select lower(c.name) as lname, c.id as "cardId",
+      `with candidate as (
+             select c.id as card_id, lower(c.name) as key from card c
+             union all
+             select c.id, lower(t || ', ' || c.name)
+               from card c, unnest(c.tags) t
+              where c.type = 'legend'
+             union all
+             select c.id, lower(t)
+               from card c, unnest(c.tags) t
+              where c.type = 'legend'
+       ),
+       resolved as (
+             select key, min(card_id) as card_id
+               from candidate
+              group by key
+             having count(distinct card_id) = 1
+       )
+       select r.key as lname, r.card_id as "cardId",
               coalesce(sum(h.quantity), 0) as owned
-         from card c
-         left join printing p on p.card_id = c.id
+         from resolved r
+         left join printing p on p.card_id = r.card_id
          left join holding h
                 on h.printing_id = p.id
                and h.owner_id = me() and h.holder_id = me()
-        where lower(c.name) = any($1::text[])
-        group by c.id, c.name`,
+        where r.key = any($1::text[])
+        group by r.key, r.card_id`,
       [names],
     );
     return new Map(rows.map((r) => [r.lname, { cardId: r.cardId, owned: Number(r.owned) }]));

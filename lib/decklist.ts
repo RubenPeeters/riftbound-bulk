@@ -18,6 +18,21 @@ export interface ParsedDecklist {
   ignored: string[];
 }
 
+/**
+ * Fold the spellings a person might type onto the one the database uses.
+ *
+ * Curly apostrophes because Kai'Sa is routinely pasted from a site that uses them, and
+ * spaced dashes because "Lee Sin - Blind Monk" is the same card as "Lee Sin, Blind Monk".
+ * Only *spaced* dashes are touched: "Nine-Tailed Fox" is a real name.
+ */
+export function normaliseName(name: string): string {
+  return name
+    .replace(/[\u2018\u2019\u02bc]/g, "'")
+    .replace(/\s+[\u2013\u2014-]\s+/g, ", ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 /** Section headers, comments and separators carry no cards. */
 function isNoise(line: string): boolean {
   if (!line) return true;
@@ -70,7 +85,7 @@ export function parseDecklist(text: string): ParsedDecklist {
       continue;
     }
 
-    name = stripAnnotations(name);
+    name = normaliseName(stripAnnotations(name));
     if (!name) {
       ignored.push(raw);
       continue;

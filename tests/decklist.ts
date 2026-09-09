@@ -52,6 +52,24 @@ const CASES: Case[] = [
     entries: [["Akali, Deadly Weapon", 3]],
   },
   { name: "blank input", input: "\n\n   \n", entries: [] },
+  {
+    name: "spaced dash becomes a comma (legend written as champion - epithet)",
+    input: "1 Lee Sin - Blind Monk\n1 Ahri \u2014 Nine-Tailed Fox",
+    entries: [
+      ["Lee Sin, Blind Monk", 1],
+      ["Ahri, Nine-Tailed Fox", 1],
+    ],
+  },
+  {
+    name: "hyphen inside a name is left alone",
+    input: "1 Nine-Tailed Fox",
+    entries: [["Nine-Tailed Fox", 1]],
+  },
+  {
+    name: "curly apostrophe folded to straight",
+    input: "1 Kai\u2019Sa, Daughter of the Void",
+    entries: [["Kai'Sa, Daughter of the Void", 1]],
+  },
 ];
 
 let failures = 0;

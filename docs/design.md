@@ -208,6 +208,22 @@ bearing on this path; they still apply if a lender holds several of their own co
 different conditions. Relaxing this decision later means building the
 request-and-acknowledge flow first, and §1.3 becomes live again the moment it is relaxed.
 
+### 1.3e A legend's card name is not what anyone calls it
+
+Legend cards are named by epithet alone: `Blind Monk`, `Nine-Tailed Fox`, `Daughter of the
+Void`. The champion is in `tags` instead, as `Lee Sin`, `Ahri`, `Kai'Sa`. Unit champions
+are the opposite, carrying both: `Darius, Trifarian`.
+
+So a decklist saying "Lee Sin, Blind Monk", or just "Lee Sin", matches no card by name,
+and the cards are present the whole time. Resolution therefore accepts three spellings for
+a legend: the card name, `Tag, Name`, and the bare tag.
+
+Two checks made this safe rather than hopeful. No synthesised `Tag, Name` collides with a
+real card name, across all 1189 printings. And exactly one champion tag is ambiguous:
+`Master Yi` names two different legends. Rather than special-case it, any spelling that
+resolves to more than one card is dropped, so it stays unmatched and is reported. Guessing
+would understate what is missing, which is the one error this feature must not make.
+
 ### 1.4 Everything is self-reported, so trust is the real design problem
 
 Nobody can verify a claim. Ruben says he lent it; Bob says he gave it back. This is not a
