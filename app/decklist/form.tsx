@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { analyseDecklist, acceptAsOwned, type DeckResult } from "./actions";
+import { analyseDecklist, acceptAsOwned, type DeckResult, type Scope } from "./actions";
 
 const PLACEHOLDER = `3 Void Gate
 2x Akali, Deadly Weapon
@@ -15,6 +15,7 @@ export default function DecklistForm() {
   const [result, setResult] = useState<DeckResult | null>(null);
   const [note, setNote] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [scope, setScope] = useState<Scope>("full");
   const [pending, start] = useTransition();
 
   const run = (fn: () => Promise<void>) => {
@@ -44,7 +45,7 @@ export default function DecklistForm() {
         <button
           type="button"
           disabled={!text.trim() || pending}
-          onClick={() => run(async () => setResult(await analyseDecklist(text)))}
+          onClick={() => run(async () => setResult(await analyseDecklist(text, scope)))}
           className="rounded bg-neutral-100 px-3 py-1.5 text-sm font-medium text-neutral-900 disabled:opacity-40"
         >
           {pending ? "Checking…" : "What am I missing?"}
@@ -55,9 +56,9 @@ export default function DecklistForm() {
             disabled={pending}
             onClick={() =>
               run(async () => {
-                const n = await acceptAsOwned(text);
+                const n = await acceptAsOwned(text, scope);
                 setNote(`Added the shortfall for ${n} card${n === 1 ? "" : "s"} to your collection.`);
-                setResult(await analyseDecklist(text));
+                setResult(await analyseDecklist(text, scope));
               })
             }
             className="rounded border border-neutral-700 px-3 py-1.5 text-sm text-neutral-300 hover:bg-neutral-800"
@@ -66,6 +67,37 @@ export default function DecklistForm() {
           </button>
         )}
       </div>
+
+      {result?.hasSideboard && (
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          <span className="text-xs text-neutral-500">Count</span>
+          {(
+            [
+              ["main", "Main deck only"],
+              ["full", "Main deck and sideboard"],
+            ] as [Scope, string][]
+          ).map(([v, label]) => (
+            <button
+              key={v}
+              type="button"
+              disabled={pending}
+              onClick={() =>
+                run(async () => {
+                  setScope(v);
+                  setResult(await analyseDecklist(text, v));
+                })
+              }
+              className={`rounded px-2.5 py-1 text-sm ${
+                scope === v
+                  ? "bg-neutral-100 font-medium text-neutral-900"
+                  : "border border-neutral-800 text-neutral-400 hover:bg-neutral-900"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
 
       {error && <p className="mt-4 text-sm text-red-400">{error}</p>}
       {note && <p className="mt-4 text-sm text-emerald-400">{note}</p>}
@@ -100,6 +132,9 @@ export default function DecklistForm() {
             <thead className="text-left text-xs text-neutral-500">
               <tr className="border-b border-neutral-800">
                 <th className="py-2 font-normal">Card</th>
+                {result.hasSideboard && (
+                  <th className="py-2 text-right font-normal text-neutral-600">Main / Side</th>
+                )}
                 <th className="py-2 text-right font-normal">Need</th>
                 <th className="py-2 text-right font-normal">Have</th>
                 <th className="py-2 text-right font-normal">Missing</th>
@@ -116,6 +151,11 @@ export default function DecklistForm() {
                       </span>
                     )}
                   </td>
+                  {result.hasSideboard && (
+                    <td className="py-1.5 text-right font-mono text-xs tabular-nums text-neutral-600">
+                      {r.main} / {r.sideboard}
+                    </td>
+                  )}
                   <td className="py-1.5 text-right tabular-nums text-neutral-400">{r.wanted}</td>
                   <td className="py-1.5 text-right tabular-nums text-neutral-400">{r.owned}</td>
                   <td

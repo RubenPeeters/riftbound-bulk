@@ -3,25 +3,46 @@
 import { revalidatePath } from "next/cache";
 import { asUser } from "@/lib/db";
 import { currentViewer } from "@/lib/session";
-import { parseDecklist } from "@/lib/decklist";
+import { parseDecklist, quantityFor, type Section } from "@/lib/decklist";
 import { deckDiff, defaultPrintings, type DeckDiffRow } from "@/lib/queries";
 
+export type Scope = Section | "full";
+
 export interface DeckResult {
-  rows: DeckDiffRow[];
+  rows: (DeckDiffRow & { main: number; sideboard: number })[];
   ignored: string[];
+  hasSideboard: boolean;
+  scope: Scope;
   totals: { wanted: number; owned: number; missing: number; unmatched: number };
 }
 
-export async function analyseDecklist(text: string): Promise<DeckResult> {
+/**
+ * `scope` decides whether the sideboard counts. "main" answers "can I build this deck",
+ * "full" answers "do I own everything this list names", which are different questions and
+ * a list with a sideboard cannot answer both at once.
+ */
+export async function analyseDecklist(text: string, scope: Scope = "full"): Promise<DeckResult> {
   const { discordId, me } = await currentViewer();
   if (me?.state !== "approved") throw new Error("not an approved member");
 
-  const { entries, ignored } = parseDecklist(text);
-  const rows = await deckDiff(discordId, entries);
+  const { entries, ignored, hasSideboard } = parseDecklist(text);
+  const wantedEntries = entries
+    .map((e) => ({ ...e, quantity: quantityFor(e, scope) }))
+    .filter((e) => e.quantity > 0);
+
+  const diffed = await deckDiff(discordId, wantedEntries);
+  const bySection = new Map(entries.map((e) => [e.name, e]));
+  const rows = diffed.map((r) => ({
+    ...r,
+    main: bySection.get(r.name)?.main ?? 0,
+    sideboard: bySection.get(r.name)?.sideboard ?? 0,
+  }));
 
   return {
     rows,
     ignored,
+    hasSideboard,
+    scope,
     totals: {
       wanted: rows.reduce((n, r) => n + r.wanted, 0),
       owned: rows.reduce((n, r) => n + Math.min(r.owned, r.wanted), 0),
@@ -41,12 +62,15 @@ export async function analyseDecklist(text: string): Promise<DeckResult> {
  *
  * Only the shortfall is added, so running it twice does not double a collection.
  */
-export async function acceptAsOwned(text: string): Promise<number> {
+export async function acceptAsOwned(text: string, scope: Scope = "full"): Promise<number> {
   const { discordId, me } = await currentViewer();
   if (me?.state !== "approved") throw new Error("not an approved member");
 
   const { entries } = parseDecklist(text);
-  const rows = (await deckDiff(discordId, entries)).filter((r) => r.cardId && r.missing > 0);
+  const wantedEntries = entries
+    .map((e) => ({ ...e, quantity: quantityFor(e, scope) }))
+    .filter((e) => e.quantity > 0);
+  const rows = (await deckDiff(discordId, wantedEntries)).filter((r) => r.cardId && r.missing > 0);
   if (rows.length === 0) return 0;
 
   const printings = await defaultPrintings(discordId, rows.map((r) => r.cardId!));

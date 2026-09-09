@@ -27,7 +27,9 @@ export default async function Decklist() {
       <p className="mt-2 mb-6 text-sm text-neutral-400">
         Paste a list to see what you are missing. Counts are across every printing of a card
         and exclude anything you have lent out, since a deck you cannot physically build is a
-        deck you are short for.
+        deck you are short for. If the list has a sideboard you can count it or not: whether
+        you can build the deck and whether you own everything the list names are different
+        questions.
       </p>
       <DecklistForm />
     </main>

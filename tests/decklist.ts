@@ -2,12 +2,14 @@
  * Checks for the decklist parser. Pure input to output, so this runs anywhere:
  *   make check-decklist
  */
-import { parseDecklist } from "../lib/decklist";
+import { parseDecklist, quantityFor, type Section } from "../lib/decklist";
 
 interface Case {
   name: string;
   input: string;
+  /** [name, quantity] under `scope`, which defaults to the whole list. */
   entries: [string, number][];
+  scope?: Section | "full";
   ignored?: number;
 }
 
@@ -66,11 +68,41 @@ const CASES: Case[] = [
     entries: [["Nine-Tailed Fox", 1]],
   },
   {
-    name: "sideboard header skipped, and its copies added to the main deck",
+    name: "full scope adds sideboard copies to the main deck",
     input: "1 Charm\n2 Disarming Rake\nSideboard:\n1 Charm\n1 Disarming Rake",
     entries: [
       ["Charm", 2],
       ["Disarming Rake", 3],
+    ],
+  },
+  {
+    name: "main scope ignores the sideboard",
+    input: "1 Charm\n2 Disarming Rake\nSideboard:\n1 Charm\n1 Disarming Rake",
+    scope: "main",
+    entries: [
+      ["Charm", 1],
+      ["Disarming Rake", 2],
+    ],
+  },
+  {
+    name: "a sideboard-only card disappears from main scope",
+    input: "1 Charm\nSideboard:\n2 Back Off",
+    scope: "main",
+    entries: [["Charm", 1]],
+  },
+  {
+    name: "bare Sideboard header, no colon",
+    input: "1 Charm\nSideboard\n1 Back Off",
+    scope: "main",
+    entries: [["Charm", 1]],
+  },
+  {
+    name: "other headers stay in the main deck",
+    input: "Legend:\n1 Lillia, Bashful Bloom\nBattlefields:\n1 Black Flame Altar",
+    scope: "main",
+    entries: [
+      ["Lillia, Bashful Bloom", 1],
+      ["Black Flame Altar", 1],
     ],
   },
   {
@@ -91,7 +123,10 @@ const CASES: Case[] = [
 let failures = 0;
 for (const c of CASES) {
   const got = parseDecklist(c.input);
-  const actual = got.entries.map((e) => [e.name, e.quantity] as [string, number]);
+  const scope = c.scope ?? "full";
+  const actual = got.entries
+    .map((e) => [e.name, quantityFor(e, scope)] as [string, number])
+    .filter(([, q]) => q > 0);
   const ok =
     JSON.stringify(actual) === JSON.stringify(c.entries) &&
     (c.ignored === undefined || got.ignored.length === c.ignored);
