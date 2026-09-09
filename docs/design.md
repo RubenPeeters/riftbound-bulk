@@ -230,8 +230,11 @@ Nobody can verify a claim. Ruben says he lent it; Bob says he gave it back. This
 database problem, it is a social one, and the schema's job is to make disagreement
 **visible** rather than to silently pick a winner.
 
-Mechanism: every event is `proposed` by whoever recorded it, and the counterparty may
-`confirm` or `dispute` it. Holdings are computed optimistically from proposed events so
+Mechanism: a loan is `proposed` by whoever recorded it, and the counterparty may `confirm`
+or `dispute` it. Acknowledgement attaches to the **loan transaction**, not to each event:
+you lend a deck, and asking someone to confirm forty cards separately guarantees they
+confirm nothing. Only the borrower's position is tracked, since the lender's is implicit
+in having recorded the loan. Holdings are computed optimistically from proposed events so
 the app is usable immediately, but anything unconfirmed carries a badge, and a disputed
 event shows both parties' positions side by side. Add append-only storage on top and the
 inconvenient loan record cannot quietly disappear.

@@ -90,3 +90,41 @@ export async function returnCards(
   revalidatePath("/loans");
   revalidatePath("/cards");
 }
+
+/**
+ * Record the borrower's position on a loan.
+ *
+ * Only the borrower's word is tracked, because the lender recorded the loan and their
+ * position is implicit in having done so. Confirming does not change any holding: the
+ * ledger already says where the cards are. What changes is whether both people agree it
+ * does, which is the whole purpose.
+ *
+ * Disputing likewise moves nothing. It marks the disagreement so it is visible to both
+ * instead of one person quietly believing something the other does not.
+ */
+export async function acknowledgeLoan(
+  transactionId: string,
+  state: "confirmed" | "disputed",
+  note: string | null,
+): Promise<void> {
+  const { discordId, me } = await currentViewer();
+  if (me?.state !== "approved") throw new Error("not an approved member");
+
+  await asUser(discordId, async (db) => {
+    // The policy pins person_id to the caller, so this can only ever be your own word.
+    const { rowCount } = await db.query(
+      `update acknowledgement set state = $2, note = $3, at = now()
+        where transaction_id = $1 and person_id = me()`,
+      [transactionId, state, note?.trim() || null],
+    );
+    if (!rowCount) {
+      await db.query(
+        `insert into acknowledgement (transaction_id, person_id, state, note)
+         values ($1, me(), $2, $3)`,
+        [transactionId, state, note?.trim() || null],
+      );
+    }
+  });
+
+  revalidatePath("/loans");
+}

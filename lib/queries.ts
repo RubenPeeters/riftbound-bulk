@@ -505,3 +505,57 @@ export async function openLoans(
     return rows;
   });
 }
+
+export interface LoanBundle {
+  transactionId: string;
+  counterparty: string;
+  purpose: string | null;
+  openedAt: string;
+  dueAt: string | null;
+  state: "proposed" | "confirmed" | "disputed";
+  note: string | null;
+  cards: string;
+  quantity: number;
+}
+
+/**
+ * Loan bundles and where the borrower stands on each.
+ *
+ * A loan is recorded by one person and concerns two, so the borrower's position is
+ * tracked separately from the fact of the loan. No acknowledgement row means unconfirmed,
+ * which is displayed rather than assumed: the point is that a disagreement is visible,
+ * not that the database picks a winner.
+ *
+ * `direction` is whose confirmation is at stake: "in" lists loans awaiting *your* word,
+ * "out" lists yours awaiting theirs.
+ */
+export async function loanBundles(
+  discordId: string | null,
+  direction: "out" | "in",
+): Promise<LoanBundle[]> {
+  return asUser(discordId, async (db) => {
+    const mineIs = direction === "out" ? "t.lender_id = me()" : "t.borrower_id = me()";
+    const other = direction === "out" ? "t.borrower_id" : "t.lender_id";
+    // The acknowledgement that matters is always the borrower's: the lender recorded it.
+    const { rows } = await db.query<LoanBundle>(
+      `select t.id::text as "transactionId",
+              pe.display_name as counterparty,
+              t.purpose, t.opened_at as "openedAt", t.due_at as "dueAt",
+              coalesce(a.state::text, 'proposed') as state,
+              a.note,
+              string_agg(distinct c.name, ', ' order by c.name) as cards,
+              coalesce(sum(e.quantity), 0)::int as quantity
+         from loan_transaction t
+         join person pe on pe.id = ${other}
+         left join acknowledgement a
+                on a.transaction_id = t.id and a.person_id = t.borrower_id
+         left join transfer_event e on e.transaction_id = t.id and e.kind = 'lend'
+         left join printing p on p.id = e.printing_id
+         left join card c on c.id = p.card_id
+        where ${mineIs} and t.closed_at is null
+        group by t.id, pe.display_name, t.purpose, t.opened_at, t.due_at, a.state, a.note
+        order by t.opened_at desc`,
+    );
+    return rows;
+  });
+}

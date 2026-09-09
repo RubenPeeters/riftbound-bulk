@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { currentViewer } from "@/lib/session";
-import { lendable, openLoans, listMembers } from "@/lib/queries";
+import { lendable, openLoans, loanBundles, listMembers } from "@/lib/queries";
 import LendForm from "./lend-form";
 import ReturnButton from "./return-button";
+import Acknowledge from "./acknowledge";
 
 export const dynamic = "force-dynamic";
 
@@ -35,12 +36,17 @@ export default async function Loans({
   const q = typeof sp.q === "string" && sp.q ? sp.q : undefined;
   const finish = sp.finish === "foil" ? "foil" : "normal";
 
-  const [out, incoming, rows, members] = await Promise.all([
+  const [out, incoming, rows, members, toConfirm, awaitingThem] = await Promise.all([
     openLoans(discordId, "out"),
     openLoans(discordId, "in"),
     lendable(discordId, q, finish),
     listMembers(discordId),
+    loanBundles(discordId, "in"),
+    loanBundles(discordId, "out"),
   ]);
+  const unconfirmed = toConfirm.filter((b) => b.state === "proposed");
+  const disputed = [...toConfirm, ...awaitingThem].filter((b) => b.state === "disputed");
+  const waiting = awaitingThem.filter((b) => b.state === "proposed");
 
   const others = members
     .filter((m) => m.id !== me.id && m.state === "approved")
@@ -114,6 +120,60 @@ export default async function Loans({
         hands. Recording a return appends to the ledger rather than erasing the loan, so the
         history stays.
       </p>
+
+      {unconfirmed.length > 0 && (
+        <section className="mt-8 rounded-lg border border-amber-900/60 bg-amber-950/10 p-4">
+          <h2 className="text-sm font-medium text-amber-300">
+            Waiting on you to confirm ({unconfirmed.length})
+          </h2>
+          <p className="mt-1 text-xs text-neutral-500">
+            Someone recorded lending you these. Confirming changes nothing about where the
+            cards are; it records that you agree they are with you.
+          </p>
+          <ul className="mt-3 space-y-3">
+            {unconfirmed.map((b) => (
+              <li key={b.transactionId} className="rounded border border-neutral-800 p-3">
+                <p className="text-sm">
+                  {b.quantity} card{b.quantity === 1 ? "" : "s"} from {b.counterparty}
+                  {b.purpose && <span className="text-neutral-500"> · {b.purpose}</span>}
+                </p>
+                <p className="mt-0.5 truncate text-xs text-neutral-500" title={b.cards ?? ""}>
+                  {b.cards}
+                </p>
+                <div className="mt-2">
+                  <Acknowledge transactionId={b.transactionId} />
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {disputed.length > 0 && (
+        <section className="mt-8 rounded-lg border border-red-900/60 bg-red-950/10 p-4">
+          <h2 className="text-sm font-medium text-red-300">Disputed ({disputed.length})</h2>
+          <p className="mt-1 text-xs text-neutral-500">
+            Nothing has been changed. The two of you disagree, and that is recorded rather
+            than resolved by the app.
+          </p>
+          <ul className="mt-3 space-y-2">
+            {disputed.map((b) => (
+              <li key={b.transactionId} className="text-sm">
+                {b.quantity} card{b.quantity === 1 ? "" : "s"} with {b.counterparty}
+                {b.note && <span className="text-neutral-400"> — &ldquo;{b.note}&rdquo;</span>}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {waiting.length > 0 && (
+        <p className="mt-8 text-xs text-neutral-500">
+          {waiting.length} loan{waiting.length === 1 ? "" : "s"} of yours{" "}
+          {waiting.length === 1 ? "is" : "are"} not yet confirmed by the borrower:{" "}
+          {waiting.map((b) => b.counterparty).join(", ")}.
+        </p>
+      )}
 
       <Section
         title="Who has my cards"
