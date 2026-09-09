@@ -56,6 +56,8 @@ export interface CardRow {
   imageUrl: string | null;
   /** How many of this printing the caller owns and holds, in the selected finish. */
   quantity: number;
+  /** How many are available across the group: owned and held by the same person. */
+  groupQuantity: number;
 }
 
 export interface CardFilters {
@@ -64,8 +66,12 @@ export interface CardFilters {
   rarity?: string;
   type?: string;
   q?: string;
-  /** "owned" and "missing" filter against the caller's own shelf. */
-  show?: "all" | "owned" | "missing";
+  /**
+   * "owned"/"missing" filter against your own shelf; "anyone"/"nobody" against the
+   * group's, counting only cards sitting with their owner, since a card already lent out
+   * is not one you can borrow.
+   */
+  show?: "all" | "owned" | "missing" | "anyone" | "nobody";
   finish?: string;
   page?: number;
 }
@@ -96,9 +102,14 @@ export async function listPrintings(
       from printing p
       join card c on c.id = p.card_id
       left join (
-           select printing_id, sum(quantity) as qty
+           select printing_id,
+                  coalesce(sum(quantity) filter (
+                      where owner_id = me() and holder_id = me()), 0) as mine,
+                  -- available to borrow: sitting with whoever owns it
+                  coalesce(sum(quantity) filter (
+                      where owner_id = holder_id), 0) as anyone
              from holding
-            where owner_id = me() and holder_id = me() and finish = $6
+            where finish = $6
             group by printing_id
       ) h on h.printing_id = p.id
       where ($1::text is null or p.expansion_code = $1)
@@ -107,8 +118,10 @@ export async function listPrintings(
         and ($4::text is null or c.type = $4)
         and ($5::text is null or c.name ilike '%' || $5 || '%')
         and ($7::text = 'all'
-             or ($7 = 'owned'   and coalesce(h.qty, 0) > 0)
-             or ($7 = 'missing' and coalesce(h.qty, 0) = 0))`;
+             or ($7 = 'owned'   and coalesce(h.mine, 0) > 0)
+             or ($7 = 'missing' and coalesce(h.mine, 0) = 0)
+             or ($7 = 'anyone'  and coalesce(h.anyone, 0) > 0)
+             or ($7 = 'nobody'  and coalesce(h.anyone, 0) = 0))`;
 
     const params = [
       f.set ?? null, f.domain ?? null, f.rarity ?? null, f.type ?? null, f.q ?? null,
@@ -126,7 +139,8 @@ export async function listPrintings(
               c.domains,
               p.rarity, c.energy, c.might,
               p.image_url      as "imageUrl",
-              coalesce(h.qty, 0)::int as quantity
+              coalesce(h.mine, 0)::int   as quantity,
+              coalesce(h.anyone, 0)::int as "groupQuantity"
        ${base}
         order by p.expansion_code, p.collector_number, p.collector_code
         limit ${PAGE_SIZE} offset ${(page - 1) * PAGE_SIZE}`,
@@ -258,5 +272,50 @@ export async function defaultPrintings(
       [cardIds],
     );
     return new Map(rows.map((r) => [r.cardId, r.printingId]));
+  });
+}
+
+export interface Holder {
+  printingId: string;
+  displayName: string;
+  quantity: number;
+}
+
+/**
+ * Who in the group has these printings, counting only cards sitting with their owner:
+ * a card already lent out is not one you can borrow. This is what turns "I am missing
+ * this" into "ask Bob".
+ *
+ * Safe to run without a me() filter only because 0006 made the holding view enforce RLS;
+ * before that it would have answered a pending account too.
+ */
+export async function holdersOf(
+  discordId: string | null,
+  printingIds: string[],
+  finish: string,
+): Promise<Map<string, Holder[]>> {
+  if (printingIds.length === 0) return new Map();
+  return asUser(discordId, async (db) => {
+    const { rows } = await db.query<Holder>(
+      `select h.printing_id as "printingId",
+              pe.display_name as "displayName",
+              sum(h.quantity)::int as quantity
+         from holding h
+         join person pe on pe.id = h.owner_id
+        where h.printing_id = any($1::text[])
+          and h.finish = $2
+          and h.owner_id = h.holder_id
+        group by h.printing_id, pe.display_name
+        having sum(h.quantity) > 0
+        order by sum(h.quantity) desc, pe.display_name`,
+      [printingIds, finish],
+    );
+    const map = new Map<string, Holder[]>();
+    for (const r of rows) {
+      const list = map.get(r.printingId) ?? [];
+      list.push(r);
+      map.set(r.printingId, list);
+    }
+    return map;
   });
 }

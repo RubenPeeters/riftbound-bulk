@@ -1,6 +1,12 @@
 import Link from "next/link";
 import { currentViewer } from "@/lib/session";
-import { listPrintings, filterOptions, PAGE_SIZE, type CardFilters } from "@/lib/queries";
+import {
+  listPrintings,
+  filterOptions,
+  holdersOf,
+  PAGE_SIZE,
+  type CardFilters,
+} from "@/lib/queries";
 import Grid from "./grid";
 
 export const dynamic = "force-dynamic";
@@ -65,7 +71,9 @@ export default async function Cards({
 
   const edit = one("edit") === "1";
   const finish = FINISHES.includes(one("finish") ?? "") ? one("finish")! : "normal";
-  const show = (["all", "owned", "missing"] as const).find((v) => v === one("show")) ?? "all";
+  const show =
+    (["all", "owned", "missing", "anyone", "nobody"] as const).find((v) => v === one("show")) ??
+    "all";
 
   const filters: CardFilters = {
     set: one("set"),
@@ -82,6 +90,12 @@ export default async function Cards({
     listPrintings(discordId, filters),
     filterOptions(discordId),
   ]);
+  // Who could lend you each of these. Only worth fetching for the page on screen.
+  const holders = await holdersOf(
+    discordId,
+    rows.map((r) => r.printingId),
+    finish,
+  );
 
   const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const page = Math.min(filters.page ?? 1, pages);
@@ -141,15 +155,20 @@ export default async function Cards({
           label="Rarity"
           options={options.rarities.map((v) => ({ value: v, label: v }))}
         />
-        <Select
-          name="show"
-          value={show === "all" ? "" : show}
-          label="Mine"
-          options={[
-            { value: "owned", label: "owned" },
-            { value: "missing", label: "missing" },
-          ]}
-        />
+        <label className="flex flex-col gap-1">
+          <span className="text-xs text-neutral-500">Show</span>
+          <select
+            name="show"
+            defaultValue={show}
+            className="rounded border border-neutral-800 bg-neutral-900 px-2 py-1.5 text-sm"
+          >
+            <option value="all">All cards</option>
+            <option value="owned">I have</option>
+            <option value="missing">I don&apos;t have</option>
+            <option value="anyone">Anyone has</option>
+            <option value="nobody">Nobody has</option>
+          </select>
+        </label>
         <Select
           name="finish"
           value={finish === "normal" ? "" : finish}

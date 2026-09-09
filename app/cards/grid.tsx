@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { saveQuantities } from "./actions";
-import type { CardRow } from "@/lib/queries";
+import type { CardRow, Holder } from "@/lib/queries";
 
 const DOMAIN_COLOR: Record<string, string> = {
   fury: "bg-red-500/15 text-red-300",
@@ -35,10 +35,13 @@ export default function Grid({
   rows,
   editable,
   finish,
+  holders = {},
 }: {
   rows: CardRow[];
   editable: boolean;
   finish: string;
+  /** Who in the group has each printing, so a card you lack says who to ask. */
+  holders?: Record<string, Holder[]>;
 }) {
   const [pending, setPending] = useState<Record<string, number>>({});
   const [busy, start] = useTransition();
@@ -161,6 +164,13 @@ export default function Grid({
                 {r.name}
               </p>
               <p className="font-mono text-[10px] text-neutral-600">{r.printedCode}</p>
+              {n === 0 && (holders[r.printingId]?.length ?? 0) > 0 && (
+                <p className="mt-1 truncate text-[10px] text-sky-400/80" title="Could lend you this">
+                  {holders[r.printingId]
+                    .map((h) => `${h.displayName} ×${h.quantity}`)
+                    .join(", ")}
+                </p>
+              )}
 
               {editable ? (
                 <div className="mt-1.5 flex items-center gap-1">
