@@ -130,6 +130,8 @@ app/admin/                   approval queue: approve, reject, suspend
 app/cards/                   browsing and collection entry: one page, ?edit=1 toggles
 app/collection/              redirect, kept so old links work
 app/decklist/                paste a list, see what is missing, or claim it as owned
+app/decks/                   saved decks, visible to the group, missing counted for you
+app/loans/                   who has my cards, what I owe, and lending
 lib/decklist.ts              the parser (pure; tests/decklist.ts covers it)
 lib/queries.ts               every read the pages do
 lib/db.ts                    asPerson(): the transaction wrapper RLS depends on

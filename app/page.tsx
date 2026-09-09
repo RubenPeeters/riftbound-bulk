@@ -65,7 +65,7 @@ export default async function Home() {
               {me.role === "admin" ? " (admin)" : ""}
             </h2>
             <p className="mt-2 mb-4 text-sm text-neutral-400">
-              Approved. The loan ledger is not built yet.
+              Approved.
             </p>
             <div className="mb-4 flex gap-3">
               <Link
@@ -73,6 +73,12 @@ export default async function Home() {
                 className="rounded bg-neutral-100 px-3 py-1.5 text-sm font-medium text-neutral-900"
               >
                 My collection
+              </Link>
+              <Link
+                href="/loans"
+                className="rounded border border-neutral-700 px-3 py-1.5 text-sm text-neutral-300 hover:bg-neutral-800"
+              >
+                Loans
               </Link>
               <Link
                 href="/decks"

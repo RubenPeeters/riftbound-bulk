@@ -421,3 +421,87 @@ export async function deckCards(
     return { deck: head.rows[0], cards: rows };
   });
 }
+
+export interface LendableRow {
+  printingId: string;
+  printedCode: string;
+  name: string;
+  imageUrl: string | null;
+  available: number;
+}
+
+/** Cards you own and are holding, so they are yours to lend. */
+export async function lendable(
+  discordId: string | null,
+  q: string | undefined,
+  finish: string,
+): Promise<LendableRow[]> {
+  return asUser(discordId, async (db) => {
+    const { rows } = await db.query<LendableRow>(
+      `select p.id as "printingId", p.printed_code as "printedCode", c.name,
+              p.image_url as "imageUrl", h.quantity::int as available
+         from holding h
+         join printing p on p.id = h.printing_id
+         join card c on c.id = p.card_id
+        where h.owner_id = me() and h.holder_id = me()
+          and h.finish = $2 and h.quantity > 0
+          and ($1::text is null or c.name ilike '%' || $1 || '%')
+        order by c.name
+        limit 200`,
+      [q ?? null, finish],
+    );
+    return rows;
+  });
+}
+
+export interface LoanLine {
+  transactionId: string;
+  counterparty: string;
+  counterpartyId: string;
+  purpose: string | null;
+  openedAt: string;
+  dueAt: string | null;
+  printingId: string;
+  printedCode: string;
+  name: string;
+  finish: string;
+  quantity: number;
+}
+
+/**
+ * Open loans, from either end.
+ *
+ * "out" is what other people are holding for you; "in" is what you are holding for other
+ * people. Both read outstanding_loan, which is the fold over the ledger, so a loan closes
+ * by appending a return rather than by editing anything.
+ */
+export async function openLoans(
+  discordId: string | null,
+  direction: "out" | "in",
+): Promise<LoanLine[]> {
+  return asUser(discordId, async (db) => {
+    const mineIs = direction === "out" ? "o.owner_id = me()" : "o.holder_id = me()";
+    const other = direction === "out" ? "o.holder_id" : "o.owner_id";
+    const { rows } = await db.query<LoanLine>(
+      `select coalesce(t.id::text, '') as "transactionId",
+              pe.display_name          as counterparty,
+              ${other}::text           as "counterpartyId",
+              t.purpose, t.opened_at as "openedAt", t.due_at as "dueAt",
+              o.printing_id as "printingId", p.printed_code as "printedCode",
+              c.name, o.finish, o.quantity
+         from outstanding_loan o
+         join printing p on p.id = o.printing_id
+         join card c on c.id = p.card_id
+         join person pe on pe.id = ${other}
+         left join lateral (
+              select lt.* from loan_transaction lt
+               where lt.lender_id = o.owner_id and lt.borrower_id = o.holder_id
+                 and lt.closed_at is null
+               order by lt.opened_at desc limit 1
+         ) t on true
+        where ${mineIs}
+        order by t.due_at nulls last, pe.display_name, c.name`,
+    );
+    return rows;
+  });
+}
