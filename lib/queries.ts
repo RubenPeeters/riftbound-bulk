@@ -155,28 +155,43 @@ export async function listPrintings(
   });
 }
 
-/** Distinct values for the filter controls, taken from what the caller can actually see. */
+/**
+ * Distinct values for the filter controls, in one round trip.
+ *
+ * This was four separate queries and runs on every card, collection and profile page. The
+ * results are reference data and identical for every approved member, but they are not
+ * cached across requests: they are reached through RLS, and a cache would have to be
+ * keyed on membership to stay honest. One query is the cheap half of the win.
+ */
 export async function filterOptions(discordId: string | null) {
   return asUser(discordId, async (db) => {
-    const sets = await db.query<{ code: string; name: string; n: string }>(
-      `select e.code, e.name, count(*) as n
-         from expansion e join printing p on p.expansion_code = e.code
-        group by e.code, e.name order by e.code`,
+    const { rows } = await db.query<{
+      sets: { code: string; name: string; n: number }[] | null;
+      domains: string[] | null;
+      rarities: string[] | null;
+      types: string[] | null;
+    }>(
+      `with s as (
+             select e.code, e.name, count(*)::int as n
+               from expansion e join printing p on p.expansion_code = e.code
+              group by e.code, e.name
+       ),
+       d as (select distinct unnest(domains) as v from card),
+       r as (select distinct rarity as v from printing where rarity is not null),
+       t as (select distinct type   as v from card    where type   is not null)
+       select
+         (select json_agg(json_build_object('code', code, 'name', name, 'n', n)
+                          order by code) from s) as sets,
+         (select json_agg(v order by v) from d)  as domains,
+         (select json_agg(v order by v) from r)  as rarities,
+         (select json_agg(v order by v) from t)  as types`,
     );
-    const domains = await db.query<{ v: string }>(
-      `select distinct unnest(domains) as v from card order by v`,
-    );
-    const rarities = await db.query<{ v: string }>(
-      `select distinct rarity as v from printing where rarity is not null order by v`,
-    );
-    const types = await db.query<{ v: string }>(
-      `select distinct type as v from card where type is not null order by v`,
-    );
+    const o = rows[0];
     return {
-      sets: sets.rows,
-      domains: domains.rows.map((r) => r.v),
-      rarities: rarities.rows.map((r) => r.v),
-      types: types.rows.map((r) => r.v),
+      sets: o?.sets ?? [],
+      domains: o?.domains ?? [],
+      rarities: o?.rarities ?? [],
+      types: o?.types ?? [],
     };
   });
 }

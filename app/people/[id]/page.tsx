@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { currentViewer } from "@/lib/session";
+import { cardImage, TILE } from "@/lib/images";
 import {
   memberProfile,
   personHoldings,
@@ -191,7 +192,7 @@ export default async function PersonPage({
                 {r.imageUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
-                    src={r.imageUrl}
+                    src={cardImage(r.imageUrl, TILE)}
                     alt={r.name}
                     loading="lazy"
                     className="aspect-[744/1039] w-full rounded object-cover"

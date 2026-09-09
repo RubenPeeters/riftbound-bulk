@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
+import { cardImage, TILE } from "@/lib/images";
 import Link from "next/link";
 import { saveQuantities, saveDesired } from "./actions";
 import type { CardRow, Holder } from "@/lib/queries";
@@ -150,7 +151,7 @@ export default function Grid({
                   // Card art is Riot's, served from their CDN and never rehosted.
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
-                    src={r.imageUrl}
+                    src={cardImage(r.imageUrl, TILE)}
                     alt={r.name}
                     loading="lazy"
                     className={`aspect-[744/1039] w-full rounded object-cover ${

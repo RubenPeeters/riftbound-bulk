@@ -67,7 +67,7 @@ export default async function Home() {
             <p className="mt-2 mb-4 text-sm text-neutral-400">
               Approved.
             </p>
-            <div className="mb-4 flex gap-3">
+            <div className="mb-4 flex flex-wrap gap-2">
               <Link
                 href="/cards?edit=1"
                 className="rounded bg-neutral-100 px-3 py-1.5 text-sm font-medium text-neutral-900"

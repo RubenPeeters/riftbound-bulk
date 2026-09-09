@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { currentViewer } from "@/lib/session";
 import { wishlistFor, memberList } from "@/lib/queries";
+import { cardImage, THUMB } from "@/lib/images";
 
 export const dynamic = "force-dynamic";
 
@@ -84,7 +85,7 @@ export default async function Wishlist({
                 {r.imageUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
-                    src={r.imageUrl}
+                    src={cardImage(r.imageUrl, THUMB)}
                     alt=""
                     loading="lazy"
                     className="h-14 w-10 shrink-0 rounded object-cover"
