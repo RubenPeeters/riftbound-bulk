@@ -243,7 +243,10 @@ export async function deckDiff(
                cross join lateral (values
                      (c.name),
                      (replace(c.name, ' - ', ', ')),
-                     (regexp_replace(c.name, '\s+-\s+.*$', ''))
+                     -- split_part rather than a regex: a backslash inside a template
+                     -- literal is eaten by JavaScript before Postgres ever sees it, so
+                     -- '\s' arrived as 's' and this variant silently matched nothing.
+                     (split_part(c.name, ' - ', 1))
                ) as v(name)
        ),
        candidate as (
